@@ -1,0 +1,18 @@
+# default: off
+# description: Pulsar POP3 mail server (xinetd version)
+service pop3
+{
+	disable			= yes
+	id 			= pulsar
+	socket_type		= stream
+        protocol		= tcp
+	wait			= no
+	user			= root
+        instances		= 10
+        nice			= 15
+	server			= @sbindir@/pulsar
+	server_args		= -i
+        flags			= NOLIBWRAP
+	log_on_success		+= PID HOST DURATION EXIT
+	log_on_failure		+= HOST
+}

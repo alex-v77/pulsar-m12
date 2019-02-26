@@ -1,0 +1,29 @@
+The list is in no particular order:
+- FreeBSD 5.1 scandir warning fix
+- add MD5 hash type
+- APOP cfg should check auth_db settings.
+- Add cfg data checking routines. name_based_virtual realms take auth_cmd from default realm.
+- Check maildir filename sizes at start of functions and drop the in-functions checks
+- document /etc/passwd format and pulsar specifics in pulsar_crypt man page.
+- add file:xy syslog:fac logging
+- adduser util for auth_db = file:/
+- assert(ssize_max > defmailstoreBufSize) !!!
+- add PIPELINING
+- bring pulsar_deliver up-to-date
+- store UIDL more efficiently in cache files
+- cleanup autoconf files and compile checks (if some components are left out, ...)
+- Add TLS support (STLS) and more configuration.
+- Improve UIDL support, more check
+- pulsar_deliver should update UIDL cache
+- enforce sane limits on usernames and passwords!
+- conditional compile of the config mysql block and options.
+- check interaction of users_auth/mailspool_owner_*
+- Berkely DB users
+- Pulsar native format
+- LMTP delivery daemon - pulsar_lmtp
+- More documentation
+- Mailspool maintennance/conversion tools
+- utilities tool: NFS lock check ...
+- Improve TCP connection handling code (pre-fork, child re-use,
+  max children, min free, max free, ...)
+- Chroot

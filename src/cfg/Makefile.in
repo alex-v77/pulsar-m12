@@ -1,0 +1,224 @@
+#
+# Copyright (C) 2001 Rok Papez <rok.papez@lugos.si>
+# Rok Papez
+# Hribovska pot 17
+# 1231 Ljubljana - Crnuce
+# EUROPE, Slovenia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+.PHONY: all install clean distclean
+
+CC = @CC@
+CFLAGS = -Wall @CFLAGS@ @DEFS@ -I./.. -I./../util
+LDFLAGS = @LDFLAGS@
+LDLIBS = @LIBS@
+AR = ar
+ARFLAGS = rcs
+
+AUTOCONF_FILES = Makefile
+
+OBJS = \
+  cfg.o\
+  cfg_debug.o\
+  cfg_inetd.o\
+  cfg_realm_chars.o\
+  cfg_listen_on.o\
+  cfg_auth_cmd.o\
+  cfg_auth_db.o\
+  cfg_mailspool.o\
+  cfg_mailspool_owner.o\
+  cfg_certificate.o\
+  cfg_realm_interface.o\
+  cfg_mysql_host.o\
+  cfg_mysql_user.o\
+  cfg_mysql_pass.o\
+  cfg_mysql_db.o\
+  cfg_mysql_table.o\
+  cfg_mysql_user_column.o\
+  cfg_mysql_pass_column.o\
+  cfg_mysql_and.o\
+  cfg_mysql_homedir.o\
+  cfg_mysql_uid.o\
+  cfg_mysql_gid.o\
+  strop.o
+
+all: cfg.a
+
+cfg.a: $(OBJS)
+	$(AR) $(ARFLAGS) $@ $?
+
+cfg.o:\
+  strop.h\
+  cfg_debug.h\
+  cfg_inetd.h\
+  cfg_realm_chars.h\
+  cfg_listen_on.h\
+  cfg_auth_cmd.h\
+  cfg_auth_db.h\
+  cfg_mailspool.h\
+  cfg_mailspool_owner.h\
+  cfg_realm_interface.h\
+  cfg_mysql_host.h\
+  cfg_mysql_user.h\
+  cfg_mysql_pass.h\
+  cfg_mysql_db.h\
+  cfg_mysql_table.h\
+  cfg_mysql_user_column.h\
+  cfg_mysql_pass_column.h\
+  cfg_mysql_and.h\
+  cfg_mysql_homedir.h\
+  cfg_mysql_uid.h\
+  cfg_mysql_gid.h\
+  cfg.h\
+  cfg.c
+
+cfg_debug.o:\
+  strop.h\
+  cfg.h\
+  cfg_debug.h\
+  cfg_debug.c
+
+cfg_inetd.o:\
+  strop.h\
+  cfg.h\
+  cfg_inetd.h\
+  cfg_inetd.c
+
+cfg_realm_chars.o:\
+  strop.h\
+  cfg.h\
+  cfg_realm_chars.h\
+  cfg_realm_chars.c
+
+cfg_listen_on.o:\
+  strop.h\
+  cfg.h\
+  cfg_listen_on.h\
+  cfg_listen_on.c
+
+cfg_auth_cmd.o:\
+  strop.h\
+  cfg.h\
+  cfg_auth_cmd.h\
+  cfg_auth_cmd.c
+
+cfg_auth_db.o:\
+  strop.h\
+  cfg.h\
+  cfg_auth_db.h\
+  cfg_auth_db.c
+
+cfg_mailspool.o:\
+  strop.h\
+  cfg.h\
+  cfg_mailspool.h\
+  cfg_mailspool.c
+
+cfg_mailspool_owner.o:\
+  strop.h\
+  cfg.h\
+  cfg_mailspool_owner.h\
+  cfg_mailspool_owner.c
+
+cfg_certificate.o:\
+  strop.h\
+  cfg.h\
+  cfg_certificate.h\
+  cfg_certificate.c
+
+cfg_realm_interface.o:\
+  strop.h\
+  cfg.h\
+  cfg_realm_interface.h\
+  cfg_realm_interface.c
+
+cfg_mysql_host.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_host.h\
+  cfg_mysql_host.c
+
+cfg_mysql_user.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_user.h\
+  cfg_mysql_user.c
+
+cfg_mysql_pass.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_pass.h\
+  cfg_mysql_pass.c
+
+cfg_mysql_db.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_db.h\
+  cfg_mysql_db.c
+
+cfg_mysql_table.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_table.h\
+  cfg_mysql_table.c
+
+cfg_mysql_user_column.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_user_column.h\
+  cfg_mysql_user_column.c
+
+cfg_mysql_pass_column.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_pass_column.h\
+  cfg_mysql_pass_column.c
+
+cfg_mysql_and.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_and.h\
+  cfg_mysql_and.c
+
+cfg_mysql_homedir.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_homedir.h\
+  cfg_mysql_homedir.c
+
+cfg_mysql_uid.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_uid.h\
+  cfg_mysql_uid.c
+
+cfg_mysql_gid.o:\
+  strop.h\
+  cfg.h\
+  cfg_mysql_gid.h\
+  cfg_mysql_gid.c
+
+strop.o:\
+  strop.h\
+  strop.c
+
+clean:
+	@rm -f *~ *.o *.a core
+
+distclean: clean
+	@rm -f $(AUTOCONF_FILES)
+
+install:

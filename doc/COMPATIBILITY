@@ -1,0 +1,12 @@
+Pulsar was succesfully compiled on:
+
+- Linux 2.4 (Redhat  7.3)  [x86]
+- Linux 2.4 (Redhat  7.2)  [x86]
+- Linux 2.4 (Debian  3.0)  [Alpha]
+- Linux 2.4 (Debian  3.0)  [PPC - RS/6000]
+- Linux 2.4 (Debian  2.2)  [x86]
+- Linux 2.2 (Debian  3.0)  [Sparc - Ultra60]
+- Linux 2.2 (Trustix 1.5)  [x86]
+- FreeBSD   (4.6-STABLE)   [x86]
+
+Compile platforms provided by sourceforge.net.

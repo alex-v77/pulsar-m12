@@ -1,0 +1,48 @@
+1. ./configure --help 
+   to list all available options.
+
+2. ./configure
+   By default the installation directory is /usr/local. You can
+   override it with a --prefix switch.
+   Example:
+     ./configure --prefix=/opt/pulsar
+
+3. make all
+
+4. make install
+
+5. If you'll run it as a standalone daemon read 5.a. If you plan
+   to run it from xinetd read 5.b.
+
+   5.a Copy pulsar.init to /etc/init.d/pulsar and enable it with
+       your runlevel tool (ntsysv) or add pulsar binary to your
+       init script.
+       You might need to add pulsar to your system path or edit
+       the init file.
+
+   5.b Copy file pulsar.xinetd to file /etc/xinetd.d/pulsar (don't
+       forget to edit the file, change path to pulsar binary and
+       restart xinetd)
+
+6. Edit the config file /etc/pulsar.conf. The installed man page
+   pulsar.conf(5) explains all the options.
+
+Configure options:
+------------------
+  --with-mysql            Enable MySQL support.
+  --with-pam              Enable PAM support.
+  --with-tcp_wrappers     Enable tcp wrappers support.
+  --enable-debug          Enable assertion checks and disable optimizations.
+  --with-mailbox_buffer_size
+                          Set the size of readahead buffer for the mailbox code (in KiB == 1024).
+                          Valid values are from 4 to 128.
+  --with-ssl              Enable OpenSSL support.
+
+Pulsar mailing list:
+--------------------
+http://lists.sourceforge.net/lists/listinfo/pulsar-users
+
+Contact information:
+--------------------
+http://pulsar.sourceforge.net
+mailto:rok.papez@lugos.si

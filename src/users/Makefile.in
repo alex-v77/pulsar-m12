@@ -1,0 +1,69 @@
+#
+# Copyright (C) 2001 Rok Papez <rok.papez@lugos.si>
+# Rok Papez
+# Hribovska pot 17
+# 1231 Ljubljana - Crnuce
+# EUROPE, Slovenia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+.PHONY: all install clean distclean
+
+CC = @CC@
+CFLAGS = -Wall @CFLAGS@ @DEFS@ -I./../cfg -I./../mailstore -I./.. -I./../md5 -I./../util
+LDFLAGS = @LDFLAGS@
+LDLIBS = @LIBS@
+AR = ar
+ARFLAGS = rcs
+
+AUTOCONF_FILES = Makefile
+
+all: users.a
+
+users.a:        \
+  users.o       \
+  users_unix.o  \
+  users_file.o  \
+  users_mysql.o \
+  users_pam.o
+	$(AR) $(ARFLAGS) $@ $?
+
+users.o:  \
+  users.h \
+  users.c
+
+users_unix.o:  \
+  users_unix.h \
+  users_unix.c
+
+users_pam.o:  \
+  users_pam.h \
+  users_pam.c
+
+users_file.o:  \
+  users_file.h \
+  users_file.c
+
+users_mysql.o:  \
+  users_mysql.h \
+  users_mysql.c
+
+clean:
+	@rm -f *~ *.o *.a core
+
+distclean: clean
+	@rm -f $(AUTOCONF_FILES)
+
+install:

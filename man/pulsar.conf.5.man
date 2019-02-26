@@ -1,0 +1,429 @@
+.TH pulsar.conf 5 "7 August 2003"
+
+.SH "NAME"
+pulsar.conf - Pulsar configuration file
+
+.SH "DESCRIPTION"
+This file, by default
+.I /etc/pulsar.conf
+is used by a 
+.B pulsar
+POP3 mail server.
+
+.SH "SYNTAX"
+All options are in the form:
+.IP
+.nf
+variable = value1, value2, 
+	value3, ..., valueN
+.fi
+.LP
+A value can have one or more subvalues:
+.LP
+.IP
+.nf
+variable = value1:subvalue1:subvalue2:...:subvalueN,
+	value2, value3, ..., valueN
+.fi
+.LP
+The number of allowed values and subvalues is variable dependant. Values can span
+multiple lines while subvalues can't.
+.LP
+.SH "QUOTING"
+You can quote by inserting the quoted text between two double quotes:
+.LP
+.IP
+"quoted text"
+.LP
+or by inserting a back-slash before a quoted character (quoting a double quote in
+this example):
+.LP
+.IP
+\\"
+.SH "BLOCKS"
+A block of options can be either 
+.B mysql
+or
+.B realm.
+.LP
+.IP
+.nf
+realm "realm name" {
+	...
+	realm options
+	...
+}
+
+mysql "mysql string ID" {
+	...
+	mysql options related to this mysql ID
+	...
+}
+.fi
+.LP
+Options can be either
+.I realm
+,
+.I global
+or
+.I mysql.
+.fi
+.LP
+
+.SH "GLOBAL OPTIONS"
+The following global options are recognized:
+.TP
+.B debug
+= 0..6
+.sp
+default = 1
+.sp
+Meaning of error levels:
+  0 - Log no messages
+  1 - Log user logins/logouts
+  2 - Log mail transfers (transfer summary per user)
+      (NOT DONE YET) and warnings
+  3 - Log user commands
+  4 - Log main function calls
+  5 - Log all relevant function calls
+  6 - Log poll requests.
+
+Independant of this setting Pulsar will 
+.B always
+log error conditions such as software internal errors and resource shortages.
+.TP
+.B inetd
+= yes | no
+.sp
+default = no
+
+If 'yes' Pulsar will expect to be called from inetd or xinetd. If 'no' Pulsar
+will run as a standalone server. The later is recommendet.
+
+.TP
+.B realm_chars 
+= "seperators"
+.sp
+Seperators are one or more of punctuation characters. It is recommendet to
+use quoting.
+
+When user logs in and if the supplied username contains one of the characters
+in the realm_chars list the username is split on first seperator character into
+.I effective_username
+and 
+.I realm_name
+
+Example:
+realm_chars = ":!"
+Splits supplied username "user1!realmA" into effective username "user1" that is
+trying to log into realm "realmA". "xusers:my_realm:!xy" or "xusers!my_realm:!xy"
+is split into effective username "xuser" that is trying to log into realm
+"my_domain:!xy".
+
+.TP
+.B listen_on
+= interface[:port], [interface[:port]], ...
+.sp
+The list conatins interfaces that Pulsar should listen on. Interface can be either
+numeric IP or a resolvable hostname. The port part is optional.
+
+.TP
+.B ssl_listen_on
+= ssl_interface[:ssl_port], [ssl_interface[:ssl_port]], ...
+.sp
+This option is identical to
+.I listen_on
+option except that it specifies interfaces with
+activated SSL encryption.
+
+.TP
+.B certificate
+= /path/to/pem/certificate [: /path/to/pem/key ]
+.sp
+Specifies a PEM file with self signed certificate and a public key file for SSL encrypted
+connections. A single file can be specified in which case the file must contain both a certificate
+and a key in PEM format. See
+.B openssl(1)
+documentation for instructions how to create these files.
+
+.SH "REALM OPTIONS"
+A realm in pulsar is actualy a set of session specific options. When user logs into a
+realm, options from this realm apply to his session. Pulsar can switch to a realm
+based on the incoming connection interface (IP based aka. virtual host) or based
+on the second part of the login username. See
+.B realm_chars
+and 
+.B realm_interface
+options for details.
+.LP
+If realm options are used outside a realm block they apply to a default realm.
+
+.TP
+.B realm_interface
+= interface[:port], [interface[:port]], ...
+.sp
+When a client connects to the specified interface it will select this realm. A client
+can still override the realm using a user:realm login if 
+.B realm_chars
+specifies a realm/username seperator.
+
+.TP
+.B mailspool
+= /path/to/mailspool | ./extension/to/homedir/inbox_file |
+/path/to/Maildir/ | ./user/homedir/Maildir/ [:mode]
+.sp
+If path starts with a dot mail will be delivered to users homedir plus the added
+path components. Mail is thus delivered to file: '$HOME/extension/to/homedir/inbox_file'.
+
+If path starts with a slash delivery will be done to a file '/path/to/mailspool/$USER'.
+
+If the mailspool ends with a '/' it is accessed in Maildir instead of mbox format. See
+.B maildir(5)
+and
+.B mbox(5)
+for format comparison.
+
+When the specified mailbox file doesn't exist it is created with a specified mode
+modified by the 0660 umask. If some path component doesn't exist login will be denied
+and error will be logged.
+
+Mode can be omitted in which case it defaults to 0600 for homedir mailstore and 0660 for
+mailspool mailstore.
+
+
+.TP
+.B mailspool_owner
+=  [ uid_number | username ] [: gid_number | group_name ]
+.sp
+Supplied uid (username) and gid (group) override the authentication mechanism supplied
+values for mailspool files access.
+
+Uid and gid can be specified either numericaly or by (user or group) name.
+
+If gid is omitted the default users group is used. If uid and colon are supplied but
+gid field is empty, uid will be overriden but gid is taken from the authentication
+mechanism. When only a colon and gid are specified (uid is omitted) uid is taken from
+authentication mechanism and gid is overried with the supplied value.
+
+.TP
+.B auth_cmd
+= [ apop |  user ]
+.sp
+Defines which authentication commands are supported. This setting works only for default
+and IP based virtual domains.
+.sp
+\fIWarning\fR: Named realms use auth_cmd setting from the default realm.
+.sp
+The problem is that pulsar can switch to a named realm only after the user has
+issued the USER or APOP command. Which is too late to display the APOP greeting banner. On
+the other hand if we always printed the APOP challange/banner some smart autoconfiguring
+client could try APOP authentication on its own, just to find out that it doesn't work for
+his realm and return an error instead of trying the USER/PASS authentication method.
+.sp
+This feature is *\fBEXPERIMENTAL\fR*.
+
+.TP
+.B auth_db
+= unix | PAM | file:/path/to/passwd_like/file [:<hash type list>] | mysql:"mysql string ID"
+.sp
+This parameter specifies which authentication modules to use. You can
+specify multiple authentication modules in a comma separated list.
+
+.B unix
+- uses /etc/passwd and if needed /etc/shadow passwords database. MD5 and DES hash types
+are transparently supported.
+
+.B PAM 
+- Uses PAM authentication module. One should be aware that additinal user infromation
+is retreived from /etc/passwd if needed.
+
+.B file
+- Following this value is a colon and a full path to a passwd like file. Passwords
+can be encrypted (Use pulsar_crypt to generate password hashes) or plaintext. Obviously
+these files should be readable only by the Pulsar daemon. In a file specify username,
+password, gid, uid and a users homedir (the last one can be omitted if system spool
+directory is used). See 
+.B hash type list
+for details on available hash types and
+.B passwd(5)
+for details on file format.
+
+.B mysql
+- Following this value is a colon and a mysql string ID that connect mysql authentication
+mechanism with a block of mysql options. See 
+.B mysql options
+for more details.
+
+.SH "MYSQL OPTIONS"
+Mysql options must be enclosed by a mysql block. The following mysql options are recognized:
+.TP
+.B host
+= mysql hostname [:port]
+.sp
+IP or resolvable name of host running mysql database. Note that when localhost is used 
+connection to mysql server is done by UNIX named pipe and not TCP/IP sockets. Optionaly you
+can specify a port if your database server is listening on a non-standard port.
+
+.TP
+.B user
+= username
+.sp
+Username to be used when connecting to MySQL server.
+
+.TP
+.B pass
+= password
+.sp
+Password to be used when connecting to MySQL server.
+
+.TP
+.B db
+= database
+.sp
+Database containing pop3 users
+
+.TP
+.B table
+= table 
+.sp
+Table containing pop3 users
+
+.TP
+.B user_column
+= usernames column
+.sp
+Column in table containing pop3 usernames
+
+.TP
+.B pass_column
+= passwords column [:<hash type list>]
+.sp
+Column in table containing pop3 users passwords hashes. See 
+.B hash type list
+for details on available hash types.
+
+.TP
+.B and
+= additional criteria
+.sp
+This column is optional. The supplied string becomes part of the select query
+sent to the database server. It can be omitted but is usualy used to evaluate
+if users account is disabled.
+
+.TP
+.B homedir
+= homedir column
+.sp
+This column is optional and used only when accessing users homedir mailstore.
+
+.TP
+.B uid
+= users uid column
+.sp
+This column is optional and contains users numeric uid.
+
+.TP
+.B gid
+= users gid column
+.sp
+This column is optional and contains users numeric gid.
+
+.SH "HASH TYPE LISTS"
+Passwords can be stored in many formats: in plaintext, hashed with DES or MD5, ... .
+This list specifies which hash types should be tried out and in which order. The list
+is given by separating the hash types by a colon ':'. If no hash type is specified
+than single list item
+.B plaintext
+is assumed.
+.sp
+Currently the supported types are (more are planned):
+.TP
+.B plaintext
+Passwords are just compared if they match (for non-hashed passwords).
+.TP
+.B crypt
+The user supplied password is hashed with the salt that is part of the in database
+password. The newly generated hash is then compared to the password hash stored in
+the database. The hash engine is the system provided crypt() function. Both DES and
+MD5 (on never machines) are transparently supported.
+.sp
+Use the
+.B pulsar_crypt
+utility to create password hashes.
+
+.LP
+Example:
+.IP
+auth_db = file:/some/passwd/like/file:crypt:plaintext
+.LP
+The authentication mechanism will locate the user entry and first try to authenticate
+the users password with the first method and if that fails with the next one and so on
+until the end of the hash type list. If the last one fails the user login is denied.
+.LP
+
+.SH "EXAMPLE 1"
+.IP
+.nf
+# Sample pulsar config file for system only users
+# please edit this file.
+
+debug = 2
+auth_db = PAM
+mailspool = /var/spool/mail:0600
+mailspool_owner = :mail
+inetd = no
+realm_chars = ":;!"
+listen_on = localhost:pop3,
+            192.168.1.2:pop3
+
+.SH "EXAMPLE 2"
+.IP
+.nf
+# Sample pulsar config file
+# please edit this file.
+
+mysql "ID1" {
+        host = mysql_host
+        user = mysql_user
+        pass = mysql_pass
+        db   = pop3_database
+
+        table       = pop3_table
+        user_column = pop3_username_column
+        pass_column = pop3_password_column
+
+        # the following settings are optional
+        #homedir = pop3_homedir_column
+        #uid     = pop3_uid_column
+        #gid     = pop3_gid_column
+
+        # an additional (and optional) criteria for select query
+        #and = "AllowMail='allow'"
+}
+
+debug = 9
+auth_db = PAM
+mailspool = /var/spool/mail:0660
+mailspool_owner = :mail
+inetd = no
+realm_chars = ":;!"
+listen_on = localhost:pop3,
+            192.168.1.2
+ssl_listen_on = localhost:pop3s,
+                192.168.1.2
+
+certificate = /var/pulsar/cert.pem:/var/pulsar/key.pem
+#certificate = /var/pulsar/cert_and_key.pem
+
+realm "offsite" {
+     realm_interface = 192.168.1.2:pop3
+	auth_db = file:/var/virtual/etc/test.passwd,
+                  mysql:ID1
+	mailspool = /var/virtual/var/spool/mail:0660
+	mailspool_owner = mail:mail
+}
+
+.fi
+
+.SH "SEE ALSO"
+pulsar(8), pulsar_crpyt(1), pulsar_deliver(8), mbox(5), maildir(5), passwd(5)

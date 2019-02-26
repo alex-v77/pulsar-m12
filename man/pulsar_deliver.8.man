@@ -1,0 +1,137 @@
+.TH pulsar_deliver 8 "10 July 2003"
+
+.SH "NAME"
+pulsar_deliver - pulsar delivery agent
+
+.SH "SYNOPSIS"
+pulsar [-h] [-d[num]] [-rrealm] username
+
+.SH "DESCRIPTION"
+A delivery agent from your SMTP server package 
+.I can
+be used to perform delivery.
+
+Pulsar_deliver however knows how to process /etc/pulsar.conf, knows
+wich gid/uid to use on delivery and it uses the same kind of locking
+as pulsar POP3 daemon. Pulsar_deliver should be run as user 
+.B root
+in most conditions so it can perform thee needed uid/gid change before
+delivery. 
+.I Security_note:
+If you do delivery to a mailspool and (virtual or system) users only
+access their mail thru pulsar POP3 daemon, you can make all of the
+mailspool owned by a system account. This way pulsar_deliver
+can be run under this system account and no uid/gid change is necessary.
+
+Pulsar mbox and Maildir files are compatible with standard mbox and Maildir
+formats. However to speed-up opening of a mailbox certain information
+is cached. Pulsar_deliver knows how to update cache information. If other
+delivery agents are used cache information needs to be updated when user
+tries to access his mail and this can take some time.
+
+For mbox pulsar uses POSIX fnctl() locking mechanism that
+.I should
+also work over NFS. If you plan to do delivery over an NFS netowork
+.B make sure
+that your NFS server 
+.B and
+client support POSIX locks.
+.I Note:
+Maildir format doesn't need locking, so this it not an issue.
+
+.B Since there weren't many requests delivery to mbox format is currently not implemented.
+
+.dnl Pulsar_deliver uses the correct multilevel >From_ quoting.
+
+.TP 
+.B -h
+.sp
+prints help message.
+
+.TP
+.B -d
+num
+.sp
+.I num
+specifies the desired debug level.
+
+.TP
+.B -r
+realm
+.sp
+Your SMTP daemon will know for wich realm delivery should be made.
+
+.TP
+.B username
+.sp
+specifies for which user delivery should be done.
+
+.SH "POSTFIX"
+First try to use postfixs own delivery agent. It is flexible enough to be used
+for most of the configurations. Nothing special needs to be configured for this.
+
+.B /etc/pulsar.conf
+.nf
+	mailspool = /var/spool/mail:0600
+
+.SH "POSTFIX SYSTEM ACCOUNT DELIVERY"
+In this example mailspool is ownder by a system account with uid =
+.B mail
+and gid =
+.B mail.
+Users access their mail only with POP3. We use Maildir system spool
+delivery.
+
+.B /etc/postfix/master.cf
+.nf
+	pulsar	unix	-	n	n	-	1	pipe flags=FR user=mail:mail argv=/usr/sbin/pulsar_deliver ${user}
+
+.fi
+Delivery is done to default realm. Add the -r option to do delivery to a
+non-default realm. The F and R flags indicate that postfix should
+prepend envelope header and Return-Path field to a message.
+
+.B /etc/postfix/main.cf
+.nf
+	pulsar_destination_recipient_limit = 1
+	mailbox_transport = pulsar
+
+.B /etc/pulsar.conf
+.nf
+	mailspool = /var/spool/Maildir/:0600
+	mailspool_owner = mail:mail
+
+.SH "FULLY FLEXIBLE POSTFIX DELIVERY"
+Postfix at the time of this writing has a policy not to run any of non-postfix
+utilities as superuser.
+The supplied patch in ./patches/postfix-*/transport_allow_root_delivery.diff
+removes this restriction in the least intrusive way. It will add support for
+"transport_allow_root_delivery" option in postfix main.cf configuration file.
+
+.I transport
+is the name of the delivery agent as specified in postfix master.cf file that
+should be allowed to run as root.
+
+.B /etc/postfix/master.cf
+.nf
+	pulsar	unix	-	n	n	-	1	pipe flags=FR user=root argv=/usr/sbin/pulsar_deliver -r test ${user}
+
+.fi
+With this line postfix will always deliver to realm "test". To make delivery to
+default realm remove the -r option. The F and R flags indicate that postfix should
+prepend envelope header and Return-Path field to a message.
+
+.B /etc/postfix/main.cf
+.nf
+	pulsar_destination_recipient_limit = 1
+	pulsar_allow_root_delivery = yes
+.fi
+
+Where
+.I pulsar
+is the transport agent as specified in the first column of master.cf file.
+Destination recepient limit must be set to 1 as pulsar_deliver must be called once
+for every user.
+
+.SH "SEE ALSO"
+pulsar(8), pulsar.conf(5), pulsar_crpyt(1), mbox(5), maildir(5), pipe(8).

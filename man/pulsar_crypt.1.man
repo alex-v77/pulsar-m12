@@ -1,0 +1,96 @@
+.TH pulsar_crypt 1 "6 August 2003"
+
+.SH "NAME"
+pulsar_crypt - Utility to create DES or MD5 salted password hashes and plain MD5 hashes
+
+.SH "SYNOPSIS"
+pulsar_crypt [ -c <password> [ -d | -m | <salt>]]
+.sp
+pulsar_crypt [ -h <to_md5_hash> ]
+
+.SH "DESCRIPTION"
+This utility works in two modes. In the first \fIcrypt\fR mode it creates DES or MD5
+salted password hashes. These hashes are compatible with system /etc/passwd hashes and
+can be used in \fBpulsar\fR authentication files (auth_db = file:/path/to/passwd/file).
+.sp
+The second, \fIhash\fR mode is for creating plain MD5 hashes useable for testing APOP
+authentication.
+
+Salted MD5 will only work if your libc crypt() function supports it. Plain MD5 is provided
+by the GNU MD5 library and is not tied to system crypt library.
+
+.TP
+.B -c
+.sp
+selects \fIcrypt\fR mode. Requires a \fBpassword\fR string parameter.
+
+.TP
+.B -h
+.sp
+selects \fIhash\fR mode. Requires a \fBto_md5_hash\fR string parameter.
+
+
+.SH "CRYPT DESCRIPTION"
+.TP
+.B -c password
+.sp
+this is a plaintext (unencoded) password.
+
+.TP
+.B -d
+.sp
+Password will be encoded by a DES hash using a random salt.
+
+.TP
+.B -m
+.sp
+Password will be encoded by a MD5 hash using a random salt.
+
+.TP
+.B salt
+.sp
+if you specify salt it will override the -d and -m switches and this salt will be
+used when creating MD5 or DES hashes. MD5 or DES hash is selected depending on
+salt format.
+
+Specify 2 salt characters from ./a..zA..Z0..9 if you want a DES hash.
+
+Specify $1$ + 8 salt characters from ./a..zA..Z0..9 for MD5. Don't forget to quote the
+MD5 salt or shell will process the $ characters.
+
+By default a random salted MD5 hash is created.
+
+
+.SH "HASH DESCRIPTION"
+.TP
+.B -h to_md5_hash
+.sp
+this is a string to MD5 hash without any salt. Usable for testing APOP login functionality.
+
+
+.SH "APOP login test"
+.TP
+To test APOP login, telnet to your pop3 server. On login APOP challange is displayed, similar to:
+.sp
++OK <5763.1062847986@pop3.host>
+.TP
+Now take the string without +OK and spaces. Append your password to the end of string and call pulsar_crypt with -h parameter. Don't forget to shell escape the braces.
+.sp
+.nf
+pulsar_crypt -h "<5763.1062847986@pop3.host>passcode"
+String: "<5763.1062847986@pop3.host>passcode"
+Hash  : "29a33cfa1655f5b9547746bbdea07d0"
+.fi
+.TP
+Take the supplied MD5 hash and issue the APOP <username> <md5hash> command.
+.sp
+.nf
+APOP username 29a33cfa1655f5b9547746bbdea07d0
++OK
+.fi
+.sp
+.TP
+The athenticatin should be succesfull.
+
+.SH "SEE ALSO"
+pulsar(8), pulsar.conf(5), pulsar_deliver(8), rfc1939.

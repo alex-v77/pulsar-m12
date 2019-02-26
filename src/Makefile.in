@@ -1,0 +1,204 @@
+#
+# Copyright (C) 2001 Rok Papez <rok.papez@lugos.si>
+# Rok Papez
+# Hribovska pot 17
+# 1231 Ljubljana - Crnuce
+# EUROPE, Slovenia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+#export CC CFLAGS LDFLAGS LIBS
+
+.PHONY: all install install-files clean distclean all-recursive \
+  install-recursive clean-recursive distclean-recursive
+
+CC = @CC@
+CFLAGS = -Wall @CFLAGS@ @DEFS@ -I./mailstore -I./cfg -I./users -I./util -I./md5
+LDFLAGS = @LDFLAGS@
+LDLIBS = @LIBS@
+
+srcdir = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+sbindir = @sbindir@
+mandir = @mandir@
+INSTALL = @INSTALL@
+
+SUB_DIRS = mailstore cfg users util md5
+AUTOCONF_FILES = config.h version.h Makefile config.log config.cache config.status
+TARGET_FILES = pulsar pulsar_crypt pulsar_deliver
+
+all: all-recursive ${TARGET_FILES}
+
+install: all install-files
+
+pulsar:                   \
+  pulsar.o                \
+  error_facility.o        \
+  pulsar_main.o           \
+  pulsar_badcmd.o         \
+  pulsar_quit.o           \
+  pulsar_user.o           \
+  pulsar_noop.o           \
+  pulsar_stat.o           \
+  pulsar_list.o           \
+  pulsar_uidl.o           \
+  pulsar_retr.o           \
+  pulsar_dele.o           \
+  pulsar_rset.o           \
+  pulsar_top.o            \
+  pulsar_capa.o           \
+  pulsar_stls.o           \
+  pulsar_misc.o           \
+  pulsar_pass.o           \
+  pulsar_apop.o           \
+  ./mailstore/mailstore.a \
+  ./users/users.a         \
+  ./util/util.a           \
+  ./md5/md5.a             \
+  ./cfg/cfg.a
+	$(CC) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+
+pulsar_deliver:           \
+  pulsar_deliver.o        \
+  ./error_facility.o      \
+  ./mailstore/mailstore.a \
+  ./users/users.a         \
+  ./util/util.a           \
+  ./md5/md5.a             \
+  ./cfg/cfg.a
+	$(CC) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+
+pulsar_crypt:    	  \
+  pulsar_crypt.o          \
+  ./md5/md5.a
+	$(CC) $(LDFLAGS) -o $@ $^ $(LOADLIBES) $(LDLIBS)
+
+pulsar_crypt.o:  \
+  pulsar_crypt.c
+
+pulsar_deliver.o:  \
+  pulsar.h         \
+  pulsar_deliver.c
+
+pulsar.o:  \
+  pulsar.h \
+  pulsar.c
+
+pulsar_main.o: \
+  pulsar.h     \
+  pulsar_main.c
+
+pulsar_badcmd.o: \
+  pulsar.h       \
+  pulsar_badcmd.c
+
+pulsar_quit.o: \
+  pulsar.h     \
+  pulsar_quit.c
+
+pulsar_user.o: \
+  pulsar.h     \
+  pulsar_user.c
+
+pulsar_noop.o: \
+  pulsar.h     \
+  pulsar_noop.c
+
+pulsar_stat.o: \
+  pulsar.h     \
+  pulsar_stat.c
+
+pulsar_list.o: \
+  pulsar.h     \
+  pulsar_list.c
+
+pulsar_uidl.o: \
+  pulsar.h     \
+  pulsar_uidl.c
+
+pulsar_retr.o: \
+  pulsar.h     \
+  pulsar_retr.c
+
+pulsar_dele.o: \
+  pulsar.h     \
+  pulsar_dele.c
+
+pulsar_rset.o: \
+  pulsar.h     \
+  pulsar_rset.c
+
+pulsar_top.o: \
+  pulsar.h     \
+  pulsar_top.c
+
+pulsar_capa.o: \
+  pulsar.h     \
+  pulsar_capa.c
+
+pulsar_stls.o: \
+  pulsar.h     \
+  pulsar_stls.c
+
+pulsar_misc.o: \
+  pulsar.h     \
+  pulsar_misc.c
+
+pulsar_pass.o: \
+  pulsar.h     \
+  pulsar_pass.c
+
+pulsar_deliver.o:  \
+  pulsar.h         \
+  pulsar_deliver.c
+
+error_facility.o:  \
+  error_facility.h \
+  error_facility.c
+
+clean:            \
+  clean-recursive \
+  clean-non-recursive
+
+distclean:                \
+  clean-non-recursive     \
+  clean-non-recursive	  \
+  distclean-recursive
+	@rm -f $(AUTOCONF_FILES)
+
+all-recursive:
+	@set -e; for i in $(SUB_DIRS); do cd $$i; $(MAKE) ; cd .. ; done
+
+install-recursive:
+	@set -e; for i in $(SUB_DIRS); do cd $$i; $(MAKE) install ; cd .. ; done
+
+clean-recursive:
+	@set -e; for i in $(SUB_DIRS); do cd $$i; $(MAKE) clean ; cd .. ; done
+
+clean-non-recursive:
+	@rm -f *~ *.o ${TARGET_FILES} core
+
+distclean-non-recursive:
+	@rm -f version.h
+
+distclean-recursive:
+	@set -e; for i in $(SUB_DIRS); do cd $$i; $(MAKE) distclean ; cd .. ; done
+
+install-files:
+	${INSTALL} -m 0755 -g root -o root -d ${sbindir}
+	${INSTALL} -m 0500 -g root -o root -s pulsar ${sbindir}
+	${INSTALL} -m 0555 -g root -o root -s pulsar_crypt ${sbindir}
+	${INSTALL} -m 0500 -g root -o root -s pulsar_deliver ${sbindir}

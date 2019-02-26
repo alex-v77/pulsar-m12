@@ -1,0 +1,256 @@
+diff -ur postfix-20010228-pl05/src/global/mail_conf.h postfix-20010228-pl05-rw/src/global/mail_conf.h
+--- postfix-20010228-pl05/src/global/mail_conf.h	Thu Dec 21 17:18:39 2000
++++ postfix-20010228-pl05-rw/src/global/mail_conf.h	Thu Oct 11 17:45:12 2001
+@@ -50,6 +50,7 @@
+ extern char *get_mail_conf_raw(const char *, const char *, int, int);
+ 
+ extern int get_mail_conf_int2(const char *, const char *, int, int, int);
++extern int get_mail_conf_bool2(const char *, const char *, int);
+ extern int get_mail_conf_time2(const char *, const char *, const char *, int, int);
+ 
+  /*
+diff -ur postfix-20010228-pl05/src/global/mail_conf_bool.c postfix-20010228-pl05-rw/src/global/mail_conf_bool.c
+--- postfix-20010228-pl05/src/global/mail_conf_bool.c	Tue May  1 17:08:07 2001
++++ postfix-20010228-pl05-rw/src/global/mail_conf_bool.c	Thu Oct 11 17:45:12 2001
+@@ -23,6 +23,11 @@
+ /*
+ /*	void	get_mail_conf_bool_fn_table(table)
+ /*	CONFIG_BOOL_TABLE *table;
++/* AUXILIARY FUNCTIONS
++/*	int	get_mail_conf_bool2(name1, name2, defval);
++/*	const char *name1;
++/*	const char *name2;
++/*	int	defval;
+ /* DESCRIPTION
+ /*	This module implements configuration parameter support for
+ /*	boolean values. The internal representation is zero (false)
+@@ -45,6 +50,9 @@
+ /*	get_mail_conf_bool_table() and get_mail_conf_int_fn_table() initialize
+ /*	lists of variables, as directed by their table arguments. A table
+ /*	must be terminated by a null entry.
++/*
++/*	get_mail_conf_bool2() concatenates the two names and is otherwise
++/*	identical to get_mail_conf_bool().
+ /* DIAGNOSTICS
+ /*	Fatal errors: malformed boolean value.
+ /* SEE ALSO
+@@ -76,6 +84,7 @@
+ 
+ #include <msg.h>
+ #include <dict.h>
++#include <stringops.h>
+ 
+ /* Global library. */
+ 
+@@ -110,6 +119,16 @@
+     if (convert_mail_conf_bool(name, &intval) == 0)
+ 	set_mail_conf_bool(name, intval = defval);
+     return (intval);
++}
++
++/* get_mail_conf_bool - evaluate boolean-valued configuration variable */
++
++int     get_mail_conf_bool2(const char *name1, const char *name2, int defval)
++{
++    char   *name;
++
++    name = concatenate(name1, name2, (char *) 0);
++    return (get_mail_conf_bool(name, defval));
+ }
+ 
+ /* get_mail_conf_bool_fn - evaluate boolean-valued configuration variable */
+diff -ur postfix-20010228-pl05/src/global/mail_params.h postfix-20010228-pl05-rw/src/global/mail_params.h
+--- postfix-20010228-pl05/src/global/mail_params.h	Sun Feb 25 19:34:21 2001
++++ postfix-20010228-pl05-rw/src/global/mail_params.h	Thu Oct 11 17:45:12 2001
+@@ -374,6 +374,17 @@
+ extern char *var_forward_path;
+ 
+  /*
++  * Pipe delivery: allow execution of 3rd party delivery agent as root
++  * Since this is valid only for PIPE delivery we won't support
++  * default_allow_root_delivery but only service specific
++  * 'transport'_allow_root_delivery
++  */
++//#define VAR_ALLOW_ROOT_DELIVERY	"default_allow_root_delivery"
++#define _ALLOW_ROOT_DELIVERY	"_allow_root_delivery"
++#define DEF_ALLOW_ROOT_DELIVERY	0
++//extern int var_allow_root_delivery;
++
++ /*
+   * Mailbox locking. DEF_MAILBOX_LOCK is defined in sys_defs.h.
+   */
+ #define VAR_MAILBOX_LOCK	"mailbox_delivery_lock"
+diff -ur postfix-20010228-pl05/src/global/pipe_command.c postfix-20010228-pl05-rw/src/global/pipe_command.c
+--- postfix-20010228-pl05/src/global/pipe_command.c	Sat Dec  9 01:10:58 2000
++++ postfix-20010228-pl05-rw/src/global/pipe_command.c	Thu Oct 11 17:46:22 2001
+@@ -72,10 +72,14 @@
+ /*	The shell to use when executing the command specified with
+ /*	PIPE_CMD_COMMAND. This shell is invoked regardless of the
+ /*	command content.
++/* .IP "PIPE_CMD_ALLOW_ROOT (int)"
++/*	Allow 3rd party delivery agent to be run as root. The default
++/*	is not to allow.
+ /* .RE
+ /* DIAGNOSTICS
+ /*	Panic: interface violations (for example, a zero-valued
+-/*	user ID or group ID, or a missing command).
++/*	user ID or group ID while PIPE_CMD_ALLOW_ROOT is zero,
++/*      or a missing command).
+ /*
+ /*	pipe_command() returns one of the following status codes:
+ /* .IP PIPE_STAT_OK
+@@ -162,6 +166,7 @@
+ {
+     char   *myname = "get_pipe_args";
+     int     key;
++    int     pipe_allow_root_delivery;	/* allow delivery as root ? */
+ 
+     /*
+      * First, set the default values.
+@@ -179,6 +184,7 @@
+     args->shell = 0;
+ 
+     pipe_command_maxtime = var_command_maxtime;
++    pipe_allow_root_delivery = DEF_ALLOW_ROOT_DELIVERY; /* no default_allow_root_delivery to copy value from */
+ 
+     /*
+      * Then, override the defaults with user-supplied inputs.
+@@ -225,15 +231,18 @@
+ 	case PIPE_CMD_SHELL:
+ 	    args->shell = va_arg(ap, char *);
+ 	    break;
++       case PIPE_CMD_ALLOW_ROOT:
++            pipe_allow_root_delivery = va_arg(ap, int);
++            break;
+ 	default:
+ 	    msg_panic("%s: unknown key: %d", myname, key);
+ 	}
+     }
+     if (args->command == 0 && args->argv == 0)
+ 	msg_panic("%s: missing PIPE_CMD_ARGV or PIPE_CMD_COMMAND", myname);
+-    if (args->uid == 0)
++    if (args->uid == 0 && !pipe_allow_root_delivery)
+ 	msg_panic("%s: privileged uid", myname);
+-    if (args->gid == 0)
++    if (args->gid == 0 && !pipe_allow_root_delivery)
+ 	msg_panic("%s: privileged gid", myname);
+ }
+ 
+Only in postfix-20010228-pl05-rw/src/global: pipe_command.c.orig
+Only in postfix-20010228-pl05-rw/src/global: pipe_command.c~
+diff -ur postfix-20010228-pl05/src/global/pipe_command.h postfix-20010228-pl05-rw/src/global/pipe_command.h
+--- postfix-20010228-pl05/src/global/pipe_command.h	Fri Dec  8 23:39:52 2000
++++ postfix-20010228-pl05-rw/src/global/pipe_command.h	Thu Oct 11 17:45:12 2001
+@@ -38,6 +38,7 @@
+ #define PIPE_CMD_SHELL		10	/* alternative shell */
+ #define PIPE_CMD_EOL		11	/* record delimiter */
+ #define PIPE_CMD_EXPORT		12	/* exportable environment */
++#define PIPE_CMD_ALLOW_ROOT	13	/* allow delivery as root */
+ 
+  /*
+   * Command completion status.
+diff -ur postfix-20010228-pl05/src/pipe/pipe.c postfix-20010228-pl05-rw/src/pipe/pipe.c
+--- postfix-20010228-pl05/src/pipe/pipe.c	Fri Apr 27 21:28:41 2001
++++ postfix-20010228-pl05-rw/src/pipe/pipe.c	Thu Oct 11 17:45:12 2001
+@@ -23,13 +23,18 @@
+ /*	fax machines, and so on.
+ /*
+ /*	To prevent Postfix from sending multiple recipients per delivery
+-/*	request, specify 
++/*	request, specify in the Postfix \fBmain.cf\fR file:
+ /*
+ /* .ti +4
+ /*	\fItransport\fB_destination_recipient_limit = 1\fR 
+ /*
+-/*	in the Postfix \fBmain.cf\fR file, where \fItransport\fR
+-/*	is the name in the first column of the Postfix \fBmaster.cf\fR
++/*      To disable root check when delivering to external command,
++/*      specify in the Postfix \fBmain.cf\fR file:
++/*
++/*	\fItransport\fB_allow_root_delivery = yes\fR
++/*
++/*	Where \fItransport\fR is the name in the first column of theP
++/*      ostfix \fBmaster.cf\fR
+ /*	entry for the pipe-based delivery transport.
+ /* COMMAND ATTRIBUTE SYNTAX
+ /* .ad
+@@ -62,8 +67,9 @@
+ /* .IP "\fBuser\fR=\fIusername\fR:\fIgroupname\fR"
+ /*	The external command is executed with the rights of the
+ /*	specified \fIusername\fR.  The software refuses to execute
+-/*	commands with root privileges, or with the privileges of the
+-/*	mail system owner. If \fIgroupname\fR is specified, the
++/*	commands with the privileges of the mail system  owner
++/*	or with root privileges (unless \fItransport\fR_allow_root_delivery
++/*      was set to \fByes\fR). If \fIgroupname\fR is specified, the
+ /*	corresponding group ID is used instead of the group ID of
+ /*	\fIusername\fR.
+ /* .IP "\fBeol=string\fR (default: \fB\en\fR)"
+@@ -277,6 +283,7 @@
+   */
+ typedef struct {
+     int     time_limit;			/* per-service time limit */
++    int     allow_root_delivery;       	/* per-service root delivery restriction */
+ } PIPE_PARAMS;
+ 
+  /*
+@@ -438,15 +445,24 @@
+ 	get_mail_conf_int2(service, "_time_limit", var_command_maxtime, 1, 0);
+ 
+     /*
++     * Figure out if this service is allowed to do delivery as root.
++     * this parameter is controlled only by transport_allow_root_delivery.
++     * A global parameter default_allow_root_delivery isn't needed since
++     * this is PIPE specific.
++     */
++    config->allow_root_delivery =
++	get_mail_conf_bool2(service, _ALLOW_ROOT_DELIVERY, DEF_ALLOW_ROOT_DELIVERY);
++
++    /*
+      * Give the poor tester a clue of what is going on.
+      */
+     if (msg_verbose)
+-	msg_info("%s: time_limit %d", myname, config->time_limit);
++	msg_info("%s: time_limit %d, allow_root_delivery %d", myname, config->time_limit, config->allow_root_delivery);
+ }
+ 
+ /* get_service_attr - get command-line attributes */
+ 
+-static void get_service_attr(PIPE_ATTR *attr, char **argv)
++static void get_service_attr(PIPE_ATTR *attr, const PIPE_PARAMS *config, char **argv)
+ {
+     char   *myname = "get_service_attr";
+     struct passwd *pwd;
+@@ -558,11 +574,11 @@
+ 	msg_fatal("missing user= attribute");
+     if (attr->command == 0)
+ 	msg_fatal("missing argv= attribute");
+-    if (attr->uid == 0)
++    if (attr->uid == 0 && !config->allow_root_delivery)
+ 	msg_fatal("request to deliver as root");
+     if (attr->uid == var_owner_uid)
+ 	msg_fatal("request to deliver as mail system owner");
+-    if (attr->gid == 0)
++    if (attr->gid == 0 && !config->allow_root_delivery)
+ 	msg_fatal("request to use privileged group id %ld", (long) attr->gid);
+     if (attr->gid == var_owner_gid)
+ 	msg_fatal("request to use mail system owner group id %ld", (long) attr->gid);
+@@ -678,7 +694,7 @@
+ 	msg_fatal("recipient count: %d", rcpt_list->len);
+     if (attr.command == 0) {
+ 	get_service_params(&conf, service);
+-	get_service_attr(&attr, argv);
++	get_service_attr(&attr, &conf, argv);
+     }
+ 
+     /*
+@@ -721,7 +737,8 @@
+ 				  PIPE_CMD_ARGV, expanded_argv->argv,
+ 				  PIPE_CMD_TIME_LIMIT, conf.time_limit,
+ 				  PIPE_CMD_EOL, STR(attr.eol),
+-				  PIPE_CMD_EXPORT, export_env->argv,
++                                  PIPE_CMD_EXPORT, export_env->argv,
++                                  PIPE_CMD_ALLOW_ROOT, conf.allow_root_delivery,
+ 				  PIPE_CMD_END);
+     argv_free(export_env);
+ 

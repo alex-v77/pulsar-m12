@@ -1,0 +1,88 @@
+2003/07/11 - version 0.1.1:
+ - Fixed numerous Maildir bugs
+ - Added APOP support
+ - pulsar_crypt can also calculate plain (not salted) md5 hashes
+   (Usefull for APOP debugging)
+
+2003/07/10 - version 0.1.0:
+ - error_facility now loggs application returned error string/rc
+   and loggs exact point of error origin
+ - added maildir support
+ - reactivated a build of pulsar_deliver
+ - enhancements to build system
+ - epm multiple package list file (rpm, deb, ...)
+ - added md5hash as UIDL in Maildir mailstore
+ - updated pulsar.conf and pulsar_deliver man pages
+
+2002/10/09 - version 0.0.9:
+ - updated pulsar.conf(5) man page
+ - FreeBSD logging fixes (logging using mail.info)
+ - IMP bugfix
+ - FreeBSD makefile fixes
+ - autoconf improvements
+ - MySQL password column defaults to 'plaintext' passwords
+   if hash type is not specified.
+
+2002/08/11 - version 0.0.8:
+ - fixed compile error in MySQL user authentication code
+ - ported to FreeBSD 4.6-STABLE
+
+2002/08/06 - version 0.0.7:
+ - implemented assert with syslog output and ifdebug() conditional compile
+ - mailspool_owner now overrides any user-db provided information
+ - moved all the sources to ./src subdirectory and updated the
+   build mechanism
+ - rewrote the mailbox handling code (delivery isn't implemented yet)
+ - added CAPA POP3 command
+ - added SSL support
+ - added ssl_listen_on option
+ - added certificate option
+ - fixed a bug in IP based virtual where interface sometimes
+   isn't matched.
+ - fixed an auth_db = file:.. bug when plaintext was not enabled
+   if hash_type_list wasn't specified.
+ - FreeBSD portability changes
+
+2002/04/21 - version 0.0.6:
+ - bugfix: cache-handling bug
+
+2002/04/11 - version 0.0.5:
+ - numerous mailbox code updates and fixes
+ - added caching support for faster loading of huge mailbox files
+ - added UIDL support
+ - MySQL authentication now supports plaintext and crypt hashed
+   passwords (use pulsar_crypt for creating password hashes).
+ - Manualy specify password hash type in auth_db=file option and
+   in password_column mysql option. Defaults to plaintext if
+   omitted. Supported hash types are plaintext and crypt (system
+   provided DES and MD5).
+
+2002/03/24 - version 0.0.4:
+ - updated mailbox code (buffering and optimization)
+ - cleanups in MySQL authentication code
+ - fixed pulsar_deliver utility
+
+2002/03/14 - version 0.0.3:
+ - added native mysql support
+ - added mailspool_owner option and removed
+   mailspool_gid
+ - expanded the mailspool option to include permissions
+ - code cleanups in config file code
+ - listening sockets now have SO_REUSEADDR set
+ - implemented TOP command
+ - rewrote mailbox handling code becouse of Outlook
+   problems
+
+ KNOWN BUGS:
+ - pulsar_deliver is broken, don't use it
+ - new mailbox handling code is not optimized yet
+
+2002/02/16 - version 0.0.2:
+ - fixed segmentation fault at client authentication when
+   realm_chars option isn't used
+ - PAM authentication musn't try to retreive users homedir
+   information when doing mailspool delivery
+ - Mailspool files should be created with permissions 660
+
+2002/01/29 - version 0.0.1:
+ - initial alpha release

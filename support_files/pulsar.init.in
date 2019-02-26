@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# pulsar - POP3 daemon init script for RedHat Linux 7.x
+#
+# Authors:	Rok Papez <rok.papez@lugos.si>
+#
+# chkconfig: 345 95 05
+# description: Pulsar POP3 mail server (standalone daemon version)
+#
+
+# Source networking configuration.
+if [ ! -f /etc/sysconfig/network ]; then
+    exit 0
+fi
+
+# Source function library.
+. /etc/init.d/functions
+
+. /etc/sysconfig/network
+
+PROG=@sbindir@/pulsar
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+# See how we were called.
+case "$1" in
+  start)
+  	echo -n "Starting Pulsar POP3 daemon: "
+        daemon ${PROG}
+        echo
+        touch /var/lock/subsys/pulsar
+	;;
+  stop)
+  	echo -n "Stopping Pulsar POP3 daemon: "
+	killproc pulsar
+        echo
+        rm -f /var/lock/subsys/pulsar
+	;;
+  status)
+  	status pulsar
+	;;
+  restart)
+	$0 stop
+	$0 start
+	;;
+  reload)
+        $0 restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart|reload|status}"
+	exit 1
+esac
+
+exit 0

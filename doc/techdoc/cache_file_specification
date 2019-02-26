@@ -1,0 +1,83 @@
+Cache file specification and guidelines:
+----------------------------------------
+If anything in unclear read the sources
+and if that fails just contact me at:
+mailto:rok.papez@lugos.si
+
+Load cache file:
+----------------
+- mtime cache_file > mtime mailbox file
+
+Recreate cache file:
+--------------------
+- When it doesn't exit
+- mtime cache_file <= mtime mailbox file
+
+Locking:
+--------
+standard fcntl() becouse we can have a race
+condition when mailbox is closed but we
+are still closing the cache file.
+If cache file is locked and mailbox file
+isn't just wait for a lock to be released
+becouse we are finishing up.
+
+Multi arch support:
+-------------------
+Mailbox files can be on NFS and we can
+have problems with endianess. Cache file
+is stored in internet (big-endian) format.
+Use htonl and ntohl for conversion :-).
+
+File structure:
+---------------
+struct _strCacheFileHdr {
+  unsigned int magic = 0x1ee7f11e;
+  unsigned int major = 1;
+  unsigned int minor = 0;
+}
+
+This structure doesn't change. It is
+immediately followed by a version specific
+header.
+
+Alignement is on a 4 byte boundary.
+
+Format doesn't change in incomaptible way
+between minor releases. That means any
+X.y reader can read any X.z files without
+corruption as long as y >= z.
+
+Version 1.0:
+------------
+struct _strCacheFileHdr_1_0 {
+  unsigned int records;
+  unsigned int offset;
+  char         UIDL[71];
+}
+
+Version specific header. The 'records' field
+indicates how many messages are in the
+acompanying inbox file. The 'offset' field
+indicates the offset where table of per message
+specific records start. There are 'record'
+number of entries, one per message.
+The UIDL field contains the next nullterminated
+UIDL string to be used for a message.
+The initial value is "!".
+The valid chars for UIDL are 0x21 thru 0x7E.
+Size of the string is variable from 1 to 70.
+See [RFC1939] for more details.
+
+struct _strCacheFileRecord_1_0 {
+  unsigned int offset;
+  unsigned int POP3_size;
+  char         UIDL[71];
+}
+
+offset field is the in-file offset of
+the start of the message (it points to the
+start of the From_ envelope line).
+POP3_size specifies message size after POP3
+formatting.
+UIDL is <guess> a message UIDL.

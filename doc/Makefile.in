@@ -1,0 +1,54 @@
+#
+# Copyright (C) 2001 Rok Papez <rok.papez@lugos.si>
+# Rok Papez
+# Hribovska pot 17
+# 1231 Ljubljana - Crnuce
+# EUROPE, Slovenia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+.PHONY: all install clean distclean
+
+DOC_FILES = CHANGES          \
+            COMPATIBILITY    \
+            INSTALL          \
+            LICENSE          \
+            SUPPORT          \
+            TODO             \
+            rfcs/rfc1082.txt \
+            rfcs/rfc1734.txt \
+            rfcs/rfc1939.txt \
+            rfcs/rfc1957.txt \
+            rfcs/rfc2033.txt \
+            rfcs/rfc2195.txt \
+            rfcs/rfc2384.txt \
+            rfcs/rfc2595.txt \
+            rfcs/rfc822.txt
+
+docdir  = @docdir@
+INSTALL = @INSTALL@
+
+all:
+
+distclean: \
+  clean
+	@rm -f Makefile
+
+clean:
+	@find . -name "*~" -exec rm -f {} ";"
+
+install:
+	${INSTALL} -m 0555 -g root -o root -d ${docdir}/
+	${INSTALL} -m 0444 -g root -o root ${DOC_FILES} ${docdir}/

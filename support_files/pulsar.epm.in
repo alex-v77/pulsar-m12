@@ -1,0 +1,99 @@
+#
+# EPM Package file
+#
+# Copyright (C) 2003 Rok Papez
+# e-mail: <rok.papez@lugos.si>
+#
+# Rok Papez
+# Hribovska pot 17
+# 1231 Ljubljana - Crnuce
+# EUROPE, Slovenia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+$version=@VERSION@
+
+# source dirs
+$srcdir=./..
+$spfiles=${srcdir}/support_files
+$docfiles=${srcdir}/doc
+$manfiles=${srcdir}/man
+$buildfiles=${srcdir}/src
+
+#destination dir, specified by autoconf prefix option
+$etcdir=/etc
+$bindir=@prefix@/bin
+$sbindir=@prefix@/sbin
+$libdir=@prefix@/lib/${version}
+$docdir=@prefix@/share/doc/pulsar-${version}
+$mandir=@prefix@/share/man
+
+# Product information
+%product     Pulsar POP3 daemon
+%copyright   Copyright (c) 2001-2003 by Rok Papez
+%vendor      Pulsar - http://pulsar.sourceforge.net
+%packager    Rok Papez (rok.papez@lugos.si)
+%license     ${srcdir}/doc/LICENSE
+%readme      ${srcdir}/README
+%description Virtual-host virtual-user POP3 server.
+%version     ${version}-1
+
+%requires initscripts
+%requires chkconfig
+%requires pam
+%requires xinetd
+%requires tcp_wrappers
+%requires mysql
+
+%preinstall
+%postinstall
+%postinstall /sbin/chkconfig --add pulsar
+%postinstall /sbin/chkconfig pulsar off
+%preremove   /sbin/chkconfig --del pulsar
+%preremove   /sbin/service pulsar stop
+
+%system all
+c 0700 root root ${etcdir}/init.d/pulsar		${spfiles}/pulsar.init
+c 0700 root root ${etcdir}/pulsar.conf			${spfiles}/pulsar.conf
+c 0700 root root ${etcdir}/pam.d/pulsar			${spfiles}/pulsar.pamd
+c 0700 root root ${etcdir}/xinet.d/pulsar     		${spfiles}/pulsar.xinetd
+
+d 0755 root root ${bindir}			       	-
+f 0555 root root ${bindir}/pulsar_crypt			${buildfiles}/pulsar_crypt
+
+d 0755 root root ${sbindir}			       	-
+f 0555 root root ${sbindir}/pulsar			${buildfiles}/pulsar
+f 0555 root root ${sbindir}/pulsar_deliver		${buildfiles}/pulsar_deliver
+
+d 0555 root root ${docdir}			       	-
+f 0444 root root ${docdir}/README			${srcdir}/README
+f 0444 root root ${docdir}/CHANGES			${docfiles}/CHANGES
+f 0444 root root ${docdir}/COMPATIBILITY		${docfiles}/COMPATIBILITY
+f 0444 root root ${docdir}/INSTALL			${docfiles}/INSTALL
+f 0444 root root ${docdir}/LICENSE			${docfiles}/LICENSE
+f 0444 root root ${docdir}/SUPPORT			${docfiles}/SUPPORT
+f 0444 root root ${docdir}/TODO				${docfiles}/TODO
+
+d 0555 root root ${mandir}			       	-
+d 0555 root root ${mandir}/man1/			-
+f 0444 root root ${mandir}/man1/pulsar_crypt.1.gz	${manfiles}/pulsar_crypt.1.gz
+d 0555 root root ${mandir}/man5/			-
+f 0444 root root ${mandir}/man5/maildir.5.gz		${manfiles}/maildir.5.gz
+f 0444 root root ${mandir}/man5/mbox.5.gz		${manfiles}/mbox.5.gz
+f 0444 root root ${mandir}/man5/pulsar.conf.5.gz       	${manfiles}/pulsar.conf.5.gz
+d 0555 root root ${mandir}/man8/			-
+f 0444 root root ${mandir}/man8/pulsar.8.gz		${manfiles}/pulsar.8.gz
+f 0444 root root ${mandir}/man8/pulsar_deliver.8.gz	${manfiles}/pulsar_deliver.8.gz

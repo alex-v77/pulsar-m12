@@ -1,0 +1,54 @@
+.TH pulsar 8 "28 January 2002"
+
+.SH "NAME"
+pulsar - internet POP3 mail server
+
+.SH "SYNOPSIS"
+pulsar [-c] [-h] [-i] [-d[num]]
+
+.SH "DESCRIPTION"
+When pulsar starts up it reads its configuration file
+.B /etc/pulsar.conf
+and processes any command switches. Command line options override config options.
+.TP
+.B -c
+.sp
+Does the same as sending signal 
+.B SIGUSR1 
+to a running daemon. See section
+.B SIGNALS
+below for details.
+
+.TP
+.B -h
+.sp
+displays help message and exits
+
+.TP
+.B -i
+.sp
+Switch to inetd mode.
+
+.TP
+.B -d
+num
+.sp
+.I num
+specifies the desired debug level.
+
+.SH "SIGNALS"
+Pulsar reacts to the following signals:
+.TP
+.B SIGUSR1
+.sp
+This switch instruct pulsar to read its configuration file and then dump
+.B effective
+configuration data to file 
+.B /var/pulsar/cfg.
+The path must exits or file will not be created.
+
+
+
+
+.SH "SEE ALSO"
+pulsar.conf(5), pulsar_crpyt(1), pulsar_deliver(8).

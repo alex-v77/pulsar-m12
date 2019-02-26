@@ -1,0 +1,48 @@
+#
+# Copyright (C) 2001 Rok Papez <rok.papez@lugos.si>
+# Rok Papez
+# Hribovska pot 17
+# 1231 Ljubljana - Crnuce
+# EUROPE, Slovenia
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of version 2 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+.PHONY: all install
+
+sup_dir = @docdir@
+INSTALL = @INSTALL@
+AUTOCONF_FILES = Makefile pulsar.epm pulsar.init pulsar.xinetd
+
+all:
+
+distclean: \
+  clean
+	@rm -rf ${AUTOCONF_FILES}
+
+clean:
+	@find . -name "*~" -exec rm -rf {} ";"
+	@rm -f ../*.rpm
+
+install:
+	${INSTALL} -m 0555 -g root -o root -d            ${sup_dir}
+	${INSTALL} -m 0644 -g root -o root pulsar.conf   ${sup_dir}
+	${INSTALL} -m 0555 -g root -o root pulsar.init   ${sup_dir}
+	${INSTALL} -m 0444 -g root -o root pulsar.pamd   ${sup_dir}
+	${INSTALL} -m 0444 -g root -o root pulsar.xinetd ${sup_dir}
+
+rpm:
+	@echo -en "Building RPM package:\t"
+	@epm --output-dir ../ -nm -f rpm pulsar pulsar.epm
+	@echo "DONE"

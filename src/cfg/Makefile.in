@@ -40,6 +40,7 @@ OBJS = \
   cfg_auth_db.o\
   cfg_mailspool.o\
   cfg_mailspool_owner.o\
+  cfg_mbox_cache.o\
   cfg_certificate.o\
   cfg_realm_interface.o\
   cfg_mysql_host.o\
@@ -96,6 +97,12 @@ cfg_inetd.o:\
   cfg.h\
   cfg_inetd.h\
   cfg_inetd.c
+
+cfg_mbox_cache.o:\
+  strop.h\
+  cfg.h\
+  cfg_mbox_cache.h\
+  cfg_mbox_cache.c
 
 cfg_realm_chars.o:\
   strop.h\

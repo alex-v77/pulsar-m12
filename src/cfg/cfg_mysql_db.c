@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_Db(strValues *val, strOptionsMySQL *mysql) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_Db(strOptionsMySQL *mysql) {
-  if (mysql->db)
-    free(mysql->db);
+  free(mysql->db);
   mysql->db = NULL;
   return;
 }

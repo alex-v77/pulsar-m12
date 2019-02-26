@@ -63,8 +63,7 @@ error:
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_PassColumn(strOptionsMySQL *mysql) {
-  if (mysql->pass_column)
-    free(mysql->pass_column);
+  free(mysql->pass_column);
   mysql->pass_column = NULL;
   mysql->pass_hash.count = 0;
   return;

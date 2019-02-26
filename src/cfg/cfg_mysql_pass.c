@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_Pass(strValues *val, strOptionsMySQL *mysql) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_Pass(strOptionsMySQL *mysql) {
-  if (mysql->pass)
-    free(mysql->pass);
+  free(mysql->pass);
   mysql->pass = NULL;
   return;
 }

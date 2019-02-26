@@ -51,11 +51,9 @@ int pulsar_user() {
     return defParam;
 
   // if previous data exists remove it
-  if(g.user)
-    free(g.user);
+  free(g.user);
   g.user = NULL;
-  if(g.realm_name)
-    free(g.realm_name);
+  free(g.realm_name);
   g.realm_name = NULL;
 
   // locate realm in a username

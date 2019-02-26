@@ -57,10 +57,8 @@ int get_user_record(const char *filename) {
   assert(!password);
   assert(filename);
 
-  if(g.homedir) {
-    free(g.homedir);
-    g.homedir = NULL;
-  }
+  free(g.homedir);
+  g.homedir = NULL;
 
   fd = fopen(filename, "rb");
   if(!fd) {
@@ -168,10 +166,8 @@ int users_file_getinfo(const char *filename) {
   int rc;
 
   rc = get_user_record(filename);
-  if(password) {
-    free(password);
-    password = NULL;
-  }
+  free(password);
+  password = NULL;
 
   return rc;
 }
@@ -229,10 +225,8 @@ int users_file_auth(const int        type,
   rc = defOK;
 
 exit:
-  if(password) {
-    free(password);
-    password = NULL;
-  }
+  free(password);
+  password = NULL;
   return rc;
 }
 //------------------------------------------------------------------------------------------------------------

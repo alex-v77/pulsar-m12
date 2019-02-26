@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_Uid(strValues *val, strOptionsMySQL *mysql) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_Uid(strOptionsMySQL *mysql) {
-  if (mysql->uid)
-    free(mysql->uid);
+  free(mysql->uid);
   mysql->uid = NULL;
   return;
 }

@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "pulsar.h"
 
@@ -50,8 +51,8 @@ int pulsar_main_read() {
 
   err_debug_function();
 
-  if(g.pop3_cmd)           // TODO: add check if we realy need to allocate a new buffer...
-    free(g.pop3_cmd);      // do some more cleanups/optimizers
+  // TODO: add check if we realy need to allocate a new buffer...
+  free(g.pop3_cmd);      // do some more cleanups/optimizers
   g.pop3_cmd = NULL;
 
   tmp = safe_malloc(defBufSize+1);
@@ -142,8 +143,7 @@ int pulsar_main_read() {
   return 0;
 
 error:
-  if(tmp)
-    free(tmp);
+  free(tmp);
   g.pop3_cmd = NULL;
   return -1;
 }
@@ -289,8 +289,7 @@ error:
     mailstore_close(g.head, 0); // don't commit.
   close(g.fd_in);
   close(g.fd_out);
-  if(g.pop3_cmd)
-    free(g.pop3_cmd);
+  free(g.pop3_cmd);
 
   err_debug_return(rc);
 }

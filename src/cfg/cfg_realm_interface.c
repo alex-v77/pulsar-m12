@@ -82,10 +82,8 @@ error:
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_RealmInterface(strOptionsRealm  *realm) {
-  if(realm->ifaces.sa)
-    free(realm->ifaces.sa);
-  if(realm->ifaces.type)
-    free(realm->ifaces.type);
+  free(realm->ifaces.sa);
+  free(realm->ifaces.type);
   realm->ifaces.sa = NULL;
   realm->ifaces.type = NULL;
   realm->ifaces.count = 0;

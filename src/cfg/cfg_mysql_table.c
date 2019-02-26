@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_Table(strValues *val, strOptionsMySQL *mysql) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_Table(strOptionsMySQL *mysql) {
-  if (mysql->table)
-    free(mysql->table);
+  free(mysql->table);
   mysql->table = NULL;
   return;
 }

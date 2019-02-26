@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/poll.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -43,6 +42,8 @@
 
 #include "util.h"
 #include "error_facility.h"
+
+#include "cfg/cfg_listen_on.h"
 
 strStaticData g;
 
@@ -191,8 +192,6 @@ int daemonize() {
   }
   if (rc>0) exit(0); //parent should exit and return control, it's OK.
 
-  fprintf(stdout,"%d\n",getpid()); // report our PID
-
   // reopen stdin, out and err with /dev/null.
   for (i=0;i<3;i++)
     close(i);
@@ -219,7 +218,17 @@ int init_tcp_server() {
 
   err_debug_function();
 
-  // BUGBUG: if ifaces.count == 0 ???
+  if ( !g.cfg->ifaces.count ) {
+  	char *var = 0;
+	strValues *vals;
+  	strop_varval( "listen_on = 1.1.1.1:pop3", &var, &vals );
+
+	interpret_cfg_data_ListenOn( vals, g.cfg, 0 );
+	g.cfg->ifaces.sa[0].sin_addr.s_addr = INADDR_ANY;
+
+	free(var);
+	strop_free( vals );
+  }
 
   // allocate space for listening sockets
   g.socket_count = g.cfg->ifaces.count;
@@ -270,8 +279,7 @@ int init_tcp_server() {
   return 0;
 
 error:
-  if(g.polls)
-    free(g.polls);
+  free(g.polls);
   g.polls = NULL;
   g.socket_count = 0;
   return -1;

@@ -47,6 +47,7 @@
 #include "cfg_auth_db.h"
 #include "cfg_mailspool.h"
 #include "cfg_mailspool_owner.h"
+#include "cfg_mbox_cache.h"
 #include "cfg_certificate.h"
 #include "cfg_realm_interface.h"
 
@@ -206,6 +207,9 @@ int interpret_cfg_data_realm(char **var, strValues **val, strOptionsRealm  *real
   else if (!strcasecmp(*var, defCfgInetd))
     rc = interpret_cfg_data_Inetd(*val, opts);
 
+  else if (!strcasecmp(*var, defCfgMboxCache))
+    rc = interpret_cfg_data_MboxCache(*val, opts);
+
   else if (!strcasecmp(*var, defCfgRealmChars))
     rc = interpret_cfg_data_RealmChars(*val, opts);
 
@@ -254,8 +258,7 @@ void free_all_options(strOptionsGlobal **opts) {
 
   for(i=0;i<(*opts)->realms_count;i++) {
     realm = &((*opts)->realms[i]);
-    if(realm->realm_name)
-      free(realm->realm_name);
+    free(realm->realm_name);
     // Add realm specific free_all_options_<YourOption> here:
     free_all_options_Mailspool(realm);
     free_all_options_RealmInterface(realm);
@@ -301,6 +304,7 @@ void dump_cfg_data(FILE *fd, strOptionsGlobal *opts) {
   // Dump of global options.
   dump_cfg_data_Debug(fd, opts);
   dump_cfg_data_Inetd(fd, opts);
+  dump_cfg_data_MboxCache(fd, opts);
   dump_cfg_data_RealmChars(fd, opts);
   dump_cfg_data_Certificate(fd, opts);
   dump_cfg_data_ListenOn(fd, opts);
@@ -407,6 +411,7 @@ strOptionsGlobal *create_global() {
   // set global options.
   opts->debug = 1; // default debug level is 1
   opts->inetd = 0; // inetd disabled
+  opts->mbox_cache_enable = 1;
   return opts;
 }
 //------------------------------------------------------------------------------------------------------------
@@ -566,13 +571,13 @@ strOptionsGlobal *cfg_read_config(const char *conf_file) {
   }
 
   if (fd) fclose(fd);
-  if (buf) free(buf);
+  free(buf);
   return opts;
 
 error:
   if (fd) fclose(fd);
   if (opts) free_all_options(&opts);
-  if (buf) free(buf);
+  free(buf);
   return NULL;
 }
 //------------------------------------------------------------------------------------------------------------
@@ -666,8 +671,7 @@ int interpret_cfg_data_int(const char *src, int *dst) {
 }
 //------------------------------------------------------------------------------------------------------------
 int interpret_cfg_data_string(const char *src, char **dst) {
-  if(*dst)
-    free(*dst);
+  free(*dst);
   *dst = strdup(src);
   if(!*dst)
     return 2;

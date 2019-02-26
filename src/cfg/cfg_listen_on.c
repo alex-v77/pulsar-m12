@@ -90,10 +90,8 @@ error:
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_ListenOn(strOptionsGlobal *opts) {
-  if(opts->ifaces.sa)
-    free(opts->ifaces.sa);
-  if(opts->ifaces.type)
-    free(opts->ifaces.type);
+  free(opts->ifaces.sa);
+  free(opts->ifaces.type);
   opts->ifaces.sa = NULL;
   opts->ifaces.type = NULL;
   opts->ifaces.count = 0;

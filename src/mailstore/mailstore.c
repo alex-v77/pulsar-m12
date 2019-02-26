@@ -101,8 +101,7 @@ error_sw:
 
 error:
   if(tmp) {
-    if(tmp->filename)
-      free(tmp->filename);
+    free(tmp->filename);
     free(tmp);
   }
   err_debug_return(-1);
@@ -144,9 +143,7 @@ error:
   rc = -1;
 
 exit:
-  if(head->filename)
-      free(head->filename);
-  head->filename = NULL;
+  free(head->filename);
   free(head);
 
   err_debug_return(rc);

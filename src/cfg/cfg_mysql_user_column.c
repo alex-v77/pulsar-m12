@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_UserColumn(strValues *val, strOptionsMySQL *mysql) 
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_UserColumn(strOptionsMySQL *mysql) {
-  if (mysql->user_column)
-    free(mysql->user_column);
+  free(mysql->user_column);
   mysql->user_column = NULL;
   return;
 }

@@ -38,11 +38,10 @@ void strop_free(strValues *opts) {
     tmp = opts->next;
     if(opts->opt) {
       for(i=0; i<opts->opt_count; i++)
-        if(opts->opt[i])
-          free(opts->opt[i]);
+        free(opts->opt[i]);
       free(opts->opt);
     }
-    if(opts->val) free(opts->val);
+    free(opts->val);
     free(opts);
   }
 }

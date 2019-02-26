@@ -41,8 +41,7 @@ int interpret_cfg_data_RealmChars(strValues *val, strOptionsGlobal *opts) {
     tmp = tmp->next;
   }
 
-  if(opts->realm_chars)
-    free(opts->realm_chars);
+  free(opts->realm_chars);
   opts->realm_chars = safe_malloc(size+1);
   if(!opts->realm_chars)
     return 2;
@@ -64,10 +63,8 @@ int interpret_cfg_data_RealmChars(strValues *val, strOptionsGlobal *opts) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_RealmChars(strOptionsGlobal *opts) {
-  if(opts->realm_chars) {
-    free(opts->realm_chars);
-    opts->realm_chars = NULL;
-  }
+  free(opts->realm_chars);
+  opts->realm_chars = NULL;
 }
 //------------------------------------------------------------------------------------------------------------
 void dump_cfg_data_RealmChars(FILE *fd, strOptionsGlobal *opts) {

@@ -156,8 +156,8 @@ int users_unix_getinfo() {
   g.owner.gid = pw->pw_gid;
   g.owner.gid_set = 1;
 
-  if(g.homedir) // out with the old one...
-    free(g.homedir);
+  // out with the old one...
+  free(g.homedir);
   g.homedir = strdup(pw->pw_dir); //... in with a new one
   if(!g.homedir) {
     err_malloc_error();

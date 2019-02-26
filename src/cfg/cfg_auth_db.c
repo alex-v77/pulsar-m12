@@ -36,8 +36,7 @@ int interpret_cfg_data_AuthDb(strValues *val, strOptionsRealm  *realm) {
   tmp = val;
   for(i=0;tmp;tmp = tmp->next, i++);
 
-  if(realm->auth_db)
-    free(realm->auth_db);
+  free(realm->auth_db);
   realm->auth_db = safe_calloc(i, sizeof(*realm->auth_db));
   if(!realm->auth_db) {
     rc = 2;
@@ -127,10 +126,8 @@ void free_all_options_AuthDb(strOptionsRealm *realm) {
   int i;
 
   if(realm->auth_db) {
-    for(i=0; i<realm->auth_db_count ;i++) {
-      if(realm->auth_db[i].filename)
-        free(realm->auth_db[i].filename);
-    }
+    for(i=0; i<realm->auth_db_count ;i++)
+      free(realm->auth_db[i].filename);
     free(realm->auth_db);
   }
   realm->auth_db_count = 0;

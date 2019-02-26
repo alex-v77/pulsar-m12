@@ -55,8 +55,7 @@ error:
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_Host(strOptionsMySQL *mysql) {
-  if (mysql->host)
-    free(mysql->host);
+  free(mysql->host);
   mysql->host = NULL;
   mysql->port = 0;
   return;

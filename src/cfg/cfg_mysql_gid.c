@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_Gid(strValues *val, strOptionsMySQL *mysql) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_Gid(strOptionsMySQL *mysql) {
-  if (mysql->gid)
-    free(mysql->gid);
+  free(mysql->gid);
   mysql->gid = NULL;
   return;
 }

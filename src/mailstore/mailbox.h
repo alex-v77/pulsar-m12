@@ -84,13 +84,13 @@ typedef struct _strCacheFileHdr {
 typedef struct _strCacheFileHdr_1_0 {
   unsigned int  records;
   unsigned int  offset;
-  unsigned char UIDL[defUIDLSize];
+  char UIDL[defUIDLSize];
 } strCacheFileHdr_1_0;
 
 typedef struct _strCacheFileRec_1_0 {
   unsigned int  offset;
   unsigned int  POP3_size;
-  unsigned char UIDL[defUIDLSize];
+  char UIDL[defUIDLSize];
 } strCacheFileRec_1_0;
 
 int mailstore_mailbox_open   (strMailstoreHead *head);

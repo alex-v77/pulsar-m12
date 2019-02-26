@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_Homedir(strValues *val, strOptionsMySQL *mysql) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_Homedir(strOptionsMySQL *mysql) {
-  if (mysql->homedir)
-    free(mysql->homedir);
+  free(mysql->homedir);
   mysql->homedir = NULL;
   return;
 }

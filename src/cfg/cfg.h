@@ -59,6 +59,7 @@
 #define defCfgInetd              "inetd"
 #define defCfgMailspool          "mailspool"
 #define defCfgMailspoolOwner     "mailspool_owner"
+#define defCfgMboxCache          "mbox_cache"
 #define defCfgCertificate        "certificate"
 #define defCfgAuthCmd            "auth_cmd"
 #define defCfgAuthDb             "auth_db"
@@ -195,6 +196,7 @@ typedef struct _strOptionsGlobal {
 
   int                 realms_count;
   strOptionsRealm    *realms;
+  int                 mbox_cache_enable;
 
   int                 mysql_count;  // Number of mysql blocks defined.
   strOptionsMySQL    *mysql;

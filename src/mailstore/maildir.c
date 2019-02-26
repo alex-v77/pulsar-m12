@@ -682,7 +682,7 @@ mailstore_maildir_retr (strMailstoreHead *head,
   strMaildirHead *my_head;
   strMaildirMsg  *my_msg;
   strMaildirBuf  *buf        =  NULL;
-  char            file[MAXPATHLEN];
+  char            file[MAXPATHLEN+1];
   int             line_count =  0;
   int             byte_count =  0;
   int             POP3_sent  =  0;
@@ -1196,14 +1196,10 @@ chdir_error:
             strerror(errno)
            );
 error:
-  if(head->fsd) {
-    free(head->fsd);
-    head->fsd = NULL;
-  }
-  if(head->msgs) {
-    free(head->msgs);
-    head->msgs = NULL;
-  }
+  free(head->fsd);
+  head->fsd = NULL;
+  free(head->msgs);
+  head->msgs = NULL;
   head->msg_count = 0;
   err_debug_return(rc);
 }
@@ -1255,12 +1251,10 @@ int mailstore_maildir_close  (strMailstoreHead *head, int commit) {
   for(i=0; i<head->msg_count; i++)
     if(head->msgs[i].fsd) {
       my_msg = head->msgs[i].fsd;
-      if(my_msg->fName)
-        free(my_msg->fName);
+      free(my_msg->fName);
       free(my_msg);
     }
-  if(head->msgs)
-    free(head->msgs);
+  free(head->msgs);
 
   err_debug_return(rc);
 }

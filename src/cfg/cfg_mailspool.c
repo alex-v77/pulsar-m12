@@ -40,8 +40,7 @@ int interpret_cfg_data_Mailspool(strValues *val, strOptionsRealm  *realm) {
   }
 
   realm->mailspool.type = 0x00;
-  if(realm->mailspool.dir)
-    free(realm->mailspool.dir); // out with the old one
+  free(realm->mailspool.dir); // out with the old one
   if('.' == val->val[0]) { // is it homedir ?
     i = 1;
     realm->mailspool.type |= defMailspoolHome;
@@ -79,8 +78,7 @@ error:
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_Mailspool(strOptionsRealm  *realm) {
-  if(realm->mailspool.dir)
-    free(realm->mailspool.dir);
+  free(realm->mailspool.dir);
   memset(&realm->mailspool, 0x00, sizeof(realm->mailspool));
   return;
 }
@@ -118,8 +116,7 @@ int add_realm_Mailspool(strOptionsRealm *dst, strOptionsRealm *src) {
     return 1;
   }
 
-  if(dst->mailspool.dir) // out with the old
-    free(dst->mailspool.dir);
+  free(dst->mailspool.dir);
 
   dst->mailspool.type = src->mailspool.type;
   dst->mailspool.mode = src->mailspool.mode;

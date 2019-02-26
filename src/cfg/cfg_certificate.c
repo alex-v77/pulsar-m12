@@ -46,8 +46,7 @@ int interpret_cfg_data_Certificate(strValues *val, strOptionsGlobal *opts) {
     if(rc)
       goto error;
   } else {
-    if(opts->key_file)
-      free(opts->key_file);
+    free(opts->key_file);
     opts->key_file = NULL;
   }
 
@@ -59,12 +58,10 @@ error:
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_Certificate(strOptionsGlobal *opts) {
-  if(opts->cert_file)
-    free(opts->cert_file);
+  free(opts->cert_file);
   opts->cert_file = NULL;
 
-  if(opts->key_file)
-    free(opts->key_file);
+  free(opts->key_file);
   opts->key_file = NULL;
 
   return;

@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_And(strValues *val, strOptionsMySQL *mysql) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_And(strOptionsMySQL *mysql) {
-  if (mysql->and)
-    free(mysql->and);
+  free(mysql->and);
   mysql->and = NULL;
   return;
 }

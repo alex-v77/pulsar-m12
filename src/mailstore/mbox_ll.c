@@ -221,8 +221,7 @@ strMailboxBuf *mbox_ll_create(int fd) {
 //----------------------------------------------------------------------------------------
 void mbox_ll_destroy(strMailboxBuf *buf) {
   assert(buf);
-  if(buf)
-    free(buf);
+  free(buf);
   return;
 }
 //----------------------------------------------------------------------------------------

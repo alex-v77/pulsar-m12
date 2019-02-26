@@ -339,17 +339,16 @@ int users_pass_check(const char *user_pass, const char *db_pass, const strPassHa
 }
 //------------------------------------------------------------------------------------------------------------
 int users_apop_check(const char *credentials, const char *db_pass) {
-  int   md5hash[4]; // 16x4x8 = 128b
+  int   md5hash[4]; // 16 bytes
+  char  md5hash_hex[33];
   char *full_string;
   int   len;
   int   rc;
 
   err_debug_function();
 
-  len = max (strlen(g.apop_string) + strlen(db_pass) + 1,
-             sizeof(md5hash)*2 + 1 // every number requires 2 bytes for ascii + '\0'
-            );
-  full_string = safe_malloc(len);
+  len = strlen(g.apop_string) + strlen(db_pass);
+  full_string = safe_malloc(len + 1);
   if(!full_string) {
     err_malloc_error();
     return defMalloc;
@@ -359,17 +358,17 @@ int users_apop_check(const char *credentials, const char *db_pass) {
   strcat(full_string, db_pass);
   err_debug(5, "String to hash: \"%s\"", full_string);
 
-  md5_buffer(full_string, len - 1, md5hash);
-  sprintf(full_string,
-          "%x%x%x%x",
+  md5_buffer(full_string, len, md5hash);
+  sprintf(md5hash_hex,
+          "%08x%08x%08x%08x",
           ntohl(md5hash[0]),
           ntohl(md5hash[1]),
           ntohl(md5hash[2]),
           ntohl(md5hash[3])
          );
 
-  err_debug(0, "comparing: \"%s\" == \"%s\"", credentials, full_string );
-  if(!strcmp(credentials, full_string))
+  err_debug(5, "comparing: \"%s\" == \"%s\"", credentials, md5hash_hex);
+  if(!strcmp(credentials, md5hash_hex))
     rc = defOK;
   else
     rc = defAuth;

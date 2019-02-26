@@ -141,8 +141,7 @@ int users_pam_getinfo() {
   pw = getpwnam(g.user);
   if(!pw) // this is not an error (yet)
     return defOK; 
-  if(g.homedir)
-    free(g.homedir);
+  free(g.homedir);
   g.homedir = strdup(pw->pw_dir);
   if(!g.homedir) {
     err_malloc_error();

@@ -39,8 +39,7 @@ int interpret_cfg_data_mysql_User(strValues *val, strOptionsMySQL *mysql) {
 }
 //------------------------------------------------------------------------------------------------------------
 void free_all_options_mysql_User(strOptionsMySQL *mysql) {
-  if (mysql->user)
-    free(mysql->user);
+  free(mysql->user);
   mysql->user = NULL;
   return;
 }

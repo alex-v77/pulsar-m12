@@ -171,10 +171,8 @@ int users_mysql_construct_query(char **query, strOptionsMySQL *mysql) {
   return defOK;
 
 error:
-  if(*query)
-    free(*query);
-  if(safe_username)
-    free(safe_username);
+  free(*query);
+  free(safe_username);
   *query = NULL;
   return rc;
 }
@@ -211,8 +209,7 @@ int users_mysql_auth(const int   type,
     err_debug(5,"MySQL(%s) authentication for user \"%s\" OK.", ID, g.user);
   else
     err_debug(5,"MySQL(%s) authentication for user \"%s\" FAILED.", ID, g.user);
-  if(db_pass)
-    free(db_pass);
+  free(db_pass);
 
   return rc;
 }
@@ -346,8 +343,7 @@ error:
     mysql_free_result(res);
   if(conn)
     mysql_close(conn);
-  if(query)
-    free(query);
+  free(query);
   return rc;
 }
 //------------------------------------------------------------------------------------------------------------

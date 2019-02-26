@@ -153,10 +153,8 @@ error:
   close_cache(head, commit);
   close(my_head->fd); // after close_cache as close() will also do unlock.
   for(i=0; i<head->msg_count; i++)
-    if(head->msgs[i].fsd)
-      free(head->msgs[i].fsd);
-  if(head->msgs)
-    free(head->msgs);
+    free(head->msgs[i].fsd);
+  free(head->msgs);
 
   err_debug_return(rc);
 }
@@ -583,15 +581,13 @@ int mailbox_commit(strMailstoreHead *head) {
   }
 
   rc = ftruncate(my_head->fd, offset);
-  if(buf)
-    free(buf);
+  free(buf);
 
   err_debug_return(0);
 
 error:
   err_debug(0, "CRITICAL I/O ERROR: Mailbox file \"%s\" might have been corrupted.", head->filename);
-  if(buf)
-    free(buf);
+  free(buf);
 
   err_debug_return(-1);
 }
@@ -721,10 +717,9 @@ int open_cache (strMailstoreHead *head) {
 error:
   // TODO.. kill msgs structures. They are not valid.
   err_debug(0, "ERROR openning cache file: \"%s\"", my_head->cache_filename);
-  if(my_head->cache_filename) {
-    free(my_head->cache_filename);
-    my_head->cache_filename = NULL;
-  }
+  free(my_head->cache_filename);
+  my_head->cache_filename = NULL;
+
   if(-1 != my_head->cache_fd) {
     close(my_head->cache_fd);
     my_head->cache_fd = -1;
@@ -813,8 +808,7 @@ exit:
       close(my_head->cache_fd);
       my_head->cache_fd = -1;
   }
-  if(my_head->cache_filename)
-    free(my_head->cache_filename);
+  free(my_head->cache_filename);
   my_head->cache_filename = NULL;
   err_debug(6, "Exiting function %s() with rc = %d", __FUNCTION__, rc);
 
@@ -1015,25 +1009,29 @@ int get_msg_hash(strMailstoreHead *head) {
     goto error;
   }
 
-  // first open cache and retreive information.
-  rc = open_cache(head);
-  if(-1 == rc)
-    goto parse_mailbox;
+  if ( g.cfg->mbox_cache_enable ) {
+    // first open cache and retreive information.
+    rc = open_cache(head);
+    if(-1 == rc)
+      goto parse_mailbox;
 
-  // stat cache file
-  rc = fstat(my_head->cache_fd, &st_cache);
-  if(-1 == rc) {
-    err_debug(0, "Unable to stat mailbox cache file: \"%s\", reason: \"%s\"",
-              my_head->cache_filename,
-              strerror(errno)
-             );
-    goto parse_mailbox;
+    // stat cache file
+    rc = fstat(my_head->cache_fd, &st_cache);
+    if(-1 == rc) {
+      err_debug(0, "Unable to stat mailbox cache file: \"%s\", reason: \"%s\"",
+                my_head->cache_filename,
+                strerror(errno)
+               );
+      goto parse_mailbox;
+    }
+
+    // is cache file up-2-date ?
+    if(st_mbox.st_mtime <= st_cache.st_mtime)
+      goto finish; // yes
+    err_debug(4, "Cache file is older than mailbox file. Will have to merge UIDL information.");
   }
-
-  // is cache file up-2-date ?
-  if(st_mbox.st_mtime <= st_cache.st_mtime)
-    goto finish; // yes
-  err_debug(4, "Cache file is older than mailbox file. Will have to merge UIDL information.");
+  else
+    my_head->cache_fd = -1;
 
 parse_mailbox:
   rc = parse_mailbox(head);

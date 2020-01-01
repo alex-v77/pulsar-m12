@@ -32,17 +32,28 @@ AUTOCONF_FILES = Makefile
 
 all: mailstore.a
 
-mailstore.a:  \
+OBJ = \
   mailbox.o   \
   maildir.o   \
   mbox_ll.o   \
   mailstore.o
+
+ifneq ("@WITH_SQLITE@","")
+OBJ += sqlite_mailbox.o
+endif
+
+mailstore.a:  $(OBJ)
 	$(AR) $(ARFLAGS) $@ $?
 
 mbox_ll.o:    \
   mailstore.h \
   mailbox.h   \
   mbox_ll.c
+
+sqlite_mailbox.o:    \
+  mailstore.h \
+  sqlite_mailbox.h   \
+  sqlite_mailbox.c
 
 mailbox.o:    \
   mailstore.h \

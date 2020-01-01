@@ -60,6 +60,7 @@
 #define defCfgMailspool          "mailspool"
 #define defCfgMailspoolOwner     "mailspool_owner"
 #define defCfgMboxCache          "mbox_cache"
+#define defCfgEnableSqlite       "enable_sqlite"
 #define defCfgCertificate        "certificate"
 #define defCfgAuthCmd            "auth_cmd"
 #define defCfgAuthDb             "auth_db"
@@ -110,6 +111,7 @@
 // mailspool_type
 #define defMailspoolHome         1  // Search for mailbox in user home dir
 #define defMailspoolMaildir      2  // Maildir format
+#define defMailspoolSqlite       4  // Sqlite mbox
 
 #define defPassHashPlainStr      "plaintext"
 #define defPassHashPlain         0
@@ -180,6 +182,8 @@ typedef struct _strOptionsRealm {
 
   strMailspool        mailspool;
   strMailspoolOwner   mailspool_owner;
+
+  int                 sqlite_enable;
 
   int                 auth_db_count;
   strAuthDb          *auth_db;

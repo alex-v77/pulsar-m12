@@ -37,11 +37,12 @@
 #define defMailstoreOpRetr  0x00 // Retreival
 #define defMailstoreOpStore 0x01 // Delivery / storing
 
-#define defMailstoreMailbox 0x00 // standard format: mailbox
-#define defMailstoreMaildir 0x01 // maildir format !!
+#define defMailstoreMailbox       0x00 // standard format: mailbox
+#define defMailstoreSqliteMailbox 0x01 // mailbox like but in sqlite db container
+#define defMailstoreMaildir       0x02 // maildir format !!
 // TODO: indexed mailbox (support for IMAP + personal information + UIDL)
 // TODO: pulsar format
-#define defMailstoreEND     defMailstoreMaildir
+#define defMailstoreEND           defMailstoreMaildir
 
 #define defUIDLSize         71
 

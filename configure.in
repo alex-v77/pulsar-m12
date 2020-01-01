@@ -96,6 +96,20 @@ if test "$with_mysql" = "yes"; then
 fi
 
 dnl ********************************************************
+dnl * --with-sqlite                                        *
+dnl ********************************************************
+AC_ARG_WITH(
+	sqlite,
+        [  --with-sqlite           Enable Sqlite support.]
+)
+
+if test "$with_sqlite" = "yes"; then
+	LIBS="$LIBS -lsqlite3"
+	AC_DEFINE(WITH_SQLITE)
+	AC_SUBST(WITH_SQLITE,"set")
+fi
+
+dnl ********************************************************
 dnl ********************************************************
 dnl * --with-pam                                           *
 dnl ********************************************************

@@ -63,7 +63,7 @@ int mailstore_sqlite_mailbox_open(strMailstoreHead *head) {
   char filename[4096];
   snprintf( filename, sizeof(filename), "%s.db", head->filename );
 
-  int rc = sqlite3_open(head->filename, &my_head->db);
+  int rc = sqlite3_open(filename, &my_head->db);
   if ( rc != SQLITE_OK ) {
     err_error(EX_NOINPUT,
               "Unable to open mailbox file: \"%s\", reason: \"%s\"",
@@ -195,6 +195,8 @@ static int mailbox_commit(strMailstoreHead *head) {
 
   sqlite3_prepare_v2( my_head->db, "DELETE FROM messages WHERE msg_id = :msg_id", -1, &query, 0 );
   for ( int i = 0; i < head->msg_count; i++ ) {
+	  if ( !head->msgs[i].deleted ) continue;
+
 	  int64_t uidl;
 	  sscanf( head->msgs[i].uidl, "%llx", (long long unsigned*)&uidl );
 	  sqlite3_bind_int64( query, 1, uidl );
@@ -252,7 +254,11 @@ static int parse_mailbox(strMailstoreHead *head) {
   }
 
   sqlite3_stmt *query = 0;
-  sqlite3_prepare_v2( my_head->db, "SELECT msg_id, text FROM messages ORDER BY msg_id", -1, &query, 0 );
+  int rc = sqlite3_prepare_v2( my_head->db, "SELECT msg_id, text FROM messages ORDER BY msg_id", -1, &query, 0 );
+  if ( rc != SQLITE_OK ) {
+	err_debug( 0, "sqlite failed (%d) to prepare get messages list for %s.db", rc, head->filename );
+	err_debug_return(-1);
+  }
 
   for (;;) {
 	int rc = sqlite3_step( query );
@@ -282,7 +288,7 @@ static int parse_mailbox(strMailstoreHead *head) {
 	else if ( rc == SQLITE_BUSY )
 		usleep(200000);
 	else {
-		err_debug( 0, "sqlite failed to get messages list for %s.db", head->filename );
+		err_debug( 0, "sqlite failed (%d) to get messages list for %s.db", rc, head->filename );
 		goto io_error;
 	}
   }

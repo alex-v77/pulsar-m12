@@ -25,6 +25,7 @@
 
 #include <sysexits.h>
 #include <syslog.h>
+#include <stdlib.h>
 
 /* ifdebug */
 #ifdef DEBUG

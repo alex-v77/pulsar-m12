@@ -20,9 +20,13 @@
 #endif
 
 #include <string.h>
+
+#ifndef __USE_ISOC99
 #define __USE_ISOC99
+#endif
 #define __USE_GNU
 #include <ctype.h>
+
 #include <stdlib.h>
 
 #include "strop.h"

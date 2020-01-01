@@ -41,6 +41,7 @@ OBJS = \
   cfg_mailspool.o\
   cfg_mailspool_owner.o\
   cfg_mbox_cache.o\
+  cfg_mbox_sqlite.o\
   cfg_certificate.o\
   cfg_realm_interface.o\
   cfg_mysql_host.o\
@@ -103,6 +104,12 @@ cfg_mbox_cache.o:\
   cfg.h\
   cfg_mbox_cache.h\
   cfg_mbox_cache.c
+
+cfg_mbox_sqlite.o:\
+  strop.h\
+  cfg.h\
+  cfg_mbox_sqlite.h\
+  cfg_mbox_sqlite.c
 
 cfg_realm_chars.o:\
   strop.h\

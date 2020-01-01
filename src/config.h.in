@@ -22,6 +22,7 @@
 
 /* Optional components */
 #undef WITH_MYSQL
+#undef WITH_SQLITE
 #undef WITH_PAM
 #undef WITH_TCP_WRAPPERS
 #undef WITH_SSL

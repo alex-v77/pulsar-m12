@@ -31,7 +31,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sysexits.h>
-#define __USE_ISOC99
+
+#ifndef __USE_ISOC99
+#define __USE_ISOC99 1
+#endif
 #define __USE_GNU
 #include <ctype.h>
 
@@ -48,6 +51,7 @@
 #include "cfg_mailspool.h"
 #include "cfg_mailspool_owner.h"
 #include "cfg_mbox_cache.h"
+#include "cfg_mbox_sqlite.h"
 #include "cfg_certificate.h"
 #include "cfg_realm_interface.h"
 
@@ -209,6 +213,9 @@ int interpret_cfg_data_realm(char **var, strValues **val, strOptionsRealm  *real
 
   else if (!strcasecmp(*var, defCfgMboxCache))
     rc = interpret_cfg_data_MboxCache(*val, opts);
+
+  else if (!strcasecmp(*var, defCfgEnableSqlite))
+    rc = interpret_cfg_data_SqliteEnable(*val, realm);
 
   else if (!strcasecmp(*var, defCfgRealmChars))
     rc = interpret_cfg_data_RealmChars(*val, opts);
@@ -385,6 +392,8 @@ strOptionsRealm *add_realm(char *realm_name, strOptionsGlobal *opts) {
       return NULL;
     if(!add_realm_MailspoolOwner(last, def))
       return NULL;
+    if(!add_realm_SqliteEnable(last, 0))
+      return NULL;
 
   } else { // insert default (#defined) values
 
@@ -396,6 +405,8 @@ strOptionsRealm *add_realm(char *realm_name, strOptionsGlobal *opts) {
     if(!add_realm_RealmInterface(last, NULL))
       return NULL;
     if(!add_realm_MailspoolOwner(last, def))
+      return NULL;
+    if(!add_realm_SqliteEnable(last, 0))
       return NULL;
 
   } // ~if(realm_name)

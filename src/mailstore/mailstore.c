@@ -34,6 +34,7 @@
 
 #include "util.h"
 #include "mailbox.h"
+#include "sqlite_mailbox.h"
 #include "maildir.h"
 #include "error_facility.h"
 
@@ -77,6 +78,13 @@ int mailstore_open (const char        *mailbox,
       if(rc)
         goto error;
       break;
+#ifdef WITH_SQLITE
+  case defMailstoreSqliteMailbox:
+      rc = mailstore_sqlite_mailbox_open(tmp);
+      if(rc)
+        goto error;
+      break;
+#endif
   case defMailstoreMaildir:
       rc = mailstore_maildir_open(tmp);
       if(rc)
@@ -123,6 +131,13 @@ int mailstore_close(strMailstoreHead *head, int commit) {
       if(rc)
         goto error;
       break;
+#ifdef WITH_SQLITE
+  case defMailstoreSqliteMailbox:
+      rc = mailstore_sqlite_mailbox_close(head, commit);
+      if(rc)
+        goto error;
+      break;
+#endif
   case defMailstoreMaildir:
       rc = mailstore_maildir_close(head, commit);
       if(rc)
@@ -168,6 +183,13 @@ int mailstore_deliver(strMailstoreHead *head, int fd) {
       if(rc)
         goto error;
       break;
+#ifdef WITH_SQLITE
+  case defMailstoreSqliteMailbox:
+      rc = mailstore_sqlite_mailbox_deliver(head, fd);
+      if(rc)
+        goto error;
+      break;
+#endif
   case defMailstoreMaildir:
       rc = mailstore_maildir_deliver(head, fd);
       if(rc)
@@ -222,6 +244,13 @@ int mailstore_retr (strMailstoreHead  *head,
       if(rc<0)
         goto error;
       break;
+#ifdef WITH_SQLITE
+  case defMailstoreSqliteMailbox:
+      rc = mailstore_sqlite_mailbox_retr(head, msg_num, fd, lines);
+      if(rc<0)
+        goto error;
+      break;
+#endif
   case defMailstoreMaildir:
       rc = mailstore_maildir_retr(head, msg_num, fd, lines);
       if(rc<0)

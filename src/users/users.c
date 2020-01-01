@@ -113,6 +113,8 @@ int users_open_mailstore(int op) {
   // open mailstore
   if(g.realm->mailspool.type & defMailspoolMaildir)
     tmp = mailstore_open(g.mailbox_path, defMailstoreMaildir, 0, g.realm->mailspool.mode, op, &g.head);
+  else if (g.realm->sqlite_enable)
+    tmp = mailstore_open(g.mailbox_path, defMailstoreSqliteMailbox, 0, g.realm->mailspool.mode, op, &g.head);
   else
     tmp = mailstore_open(g.mailbox_path, defMailstoreMailbox, 0, g.realm->mailspool.mode, op, &g.head);
 

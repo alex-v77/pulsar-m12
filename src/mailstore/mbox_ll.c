@@ -26,6 +26,7 @@
 
 #include <errno.h>
 #include <syslog.h>
+#include <stdio.h>
 #include <stdlib.h>
 #define  __USE_GNU // this is needed for memmem in string.h
 #include <string.h>
@@ -174,6 +175,29 @@ int mbox_ll_net_write(int fd, strMailboxBuf *buf, int *written) {
   if(written)
     written[0] += i;
   return i;
+
+io_error:
+  return -1;
+}
+//----------------------------------------------------------------------------------------
+int mbox_ll_stdio_write(FILE *f, strMailboxBuf *buf) {
+  const char mask[] = defMailboxFrom;
+  int        i;
+  int        rc;
+
+  for(i=0; i < buf->quoted_chars; i++) {
+    rc = fwrite(">", 1, 1, f);
+    if(-1 == rc)
+      goto io_error;
+  }
+
+  if(buf->from_chars) {
+    rc = fwrite(mask, 1, buf->from_chars, f);
+    if(-1 == rc)
+      goto io_error;
+  }
+
+  return buf->quoted_chars + buf->from_chars;
 
 io_error:
   return -1;

@@ -107,6 +107,7 @@ char          *mbox_ll_mem(strMailboxBuf *buf);                   /* decompress 
 int            mbox_ll_safe_write(int fd, strMailboxBuf *buf);    /* write to non-ssl layer    */
 int            mbox_ll_net_write(int fd, strMailboxBuf *buf,      /* write to ssl layer        */
                                  int *written);
+int            mbox_ll_stdio_write(FILE *f, strMailboxBuf *buf);
 int            mbox_ll_buf_size(strMailboxBuf *buf);              /* size of uncompressed data */
 
 #else

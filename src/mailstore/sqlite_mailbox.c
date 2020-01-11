@@ -181,9 +181,6 @@ int mailstore_sqlite_mailbox_deliver(strMailstoreHead *head, int fd) {
   err_debug_return(-1);
 }
 //----------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------
-//----------------------------------------------------------------------------------------
 static int mailbox_commit(strMailstoreHead *head) {
   strMailboxHead_sqlite *my_head;
   sqlite3_stmt *query = 0;
@@ -254,10 +251,18 @@ static int parse_mailbox(strMailstoreHead *head) {
   }
 
   sqlite3_stmt *query = 0;
-  int rc = sqlite3_prepare_v2( my_head->db, "SELECT msg_id, text FROM messages ORDER BY msg_id", -1, &query, 0 );
-  if ( rc != SQLITE_OK ) {
-	err_debug( 0, "sqlite failed (%d) to prepare get messages list for %s.db", rc, head->filename );
-	err_debug_return(-1);
+  int rc;
+
+  for (;;) {
+	rc = sqlite3_prepare_v2( my_head->db, "SELECT msg_id, text FROM messages ORDER BY msg_id", -1, &query, 0 );
+	if ( rc == SQLITE_OK )
+		break;
+	else if ( rc == SQLITE_BUSY )
+		usleep( 200000 );
+	else {
+		err_debug( 0, "sqlite failed (%d) to prepare get messages list for %s.db", rc, head->filename );
+		err_debug_return(-1);
+	}
   }
 
   for (;;) {

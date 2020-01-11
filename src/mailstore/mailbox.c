@@ -170,6 +170,9 @@ int mailstore_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lin
   int             is_body    = 0;
   int             tmp;
   int             rc;
+  FILE           *f = 0;
+  char           *stream_data = 0;
+  size_t          stream_len;
 
   err_debug_function();
 
@@ -221,6 +224,8 @@ int mailstore_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lin
   }
   byte_count = buf->len;
 
+  f = open_memstream( &stream_data, &stream_len );
+
   while(1) { // line iteration -- LINES
     rc  = mbox_ll_start(buf);
     if(rc < 0)  {
@@ -236,8 +241,8 @@ int mailstore_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lin
 
     // blank line
     if(was_blank) {
-      rc = counting_net_write(fd, "\r\n", 2, &POP3_sent);
-      if(-1 == rc) {
+      rc = fwrite("\r\n", 1, 2, f);
+      if(2 != rc) {
         err_io_error();
         goto error;
       }
@@ -266,15 +271,15 @@ int mailstore_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lin
 
     // do we need to dot-stuff this line ?
     if('.' == buf->start[0]) {
-      rc = counting_net_write(fd, ".", 1, &POP3_sent);
-      if(-1 == rc) {
+      rc = fwrite(".", 1, 1, f);
+      if(1 != rc) {
         err_io_error();
         goto error;
       }
     }
 
     // send compressed data
-    rc = mbox_ll_net_write(fd, buf, &POP3_sent);
+    rc = mbox_ll_stdio_write(f, buf);
     if(-1 == rc) {
       err_io_error();
       goto error;
@@ -284,8 +289,8 @@ int mailstore_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lin
     // send incomplete line data (NL not in buffer window)
     while(!buf->end) {
       tmp = mbox_ll_buf_size(buf);
-      rc = counting_net_write(fd, buf->start, tmp, &POP3_sent);
-      if(-1 == rc) {
+      rc = fwrite(buf->start, 1, tmp, f);
+      if(tmp != rc) {
         err_io_error();
         goto error;
       }
@@ -299,8 +304,8 @@ int mailstore_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lin
 
     // found end of line...
     tmp = mbox_ll_buf_size(buf);
-    rc = counting_net_write(fd, buf->start, tmp - 1, &POP3_sent);
-    if(-1 == rc) {
+    rc = fwrite(buf->start, 1, tmp - 1, f);
+    if(tmp-1 != rc) {
       //err_debug(0, "PAZI>>>> %d, END: %x, START: %x, SIZE: %d", tmp, buf->end, buf->start, buf->size);
       err_io_error();
       goto error;
@@ -308,12 +313,23 @@ int mailstore_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lin
     byte_count += tmp;
 
     // terminate with a CRLF
-    rc = counting_net_write(fd, "\r\n", 2, &POP3_sent);
-    if(-1 == rc)  {
+    rc = fwrite("\r\n", 1, 2, f);
+    if(2 != rc)  {
       err_io_error();
       goto error;
     }
   } //~while -- LINES
+
+  fclose( f );
+  f = 0;
+
+  POP3_sent = net_write( fd, stream_data, stream_len );
+  if ( POP3_sent != stream_len ) {
+	err_io_error();
+	goto error;
+  }
+
+  free( stream_data );
 
   //debug check... omit this in final version. (POP3_sent, byte_count).
   ifdebug() {
@@ -340,6 +356,9 @@ int mailstore_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lin
 error:
   if(buf)
     mbox_ll_destroy(buf);
+
+  if ( f ) fclose(f);
+  free( stream_data );
 
   err_debug_return(-1);
 }
@@ -499,14 +518,6 @@ int counting_disk_write(int fd, const char *buf, size_t count, int *written1, in
   return rc;
 }
 */
-//----------------------------------------------------------------------------------------
-int counting_net_write(int fd, const void *buf, size_t count, int *written) {
-  int rc;
-  rc = net_write(fd, buf, count);
-  if(rc > 0)
-    *written += count;
-  return rc;
-}
 //----------------------------------------------------------------------------------------
 int mailbox_commit_repos(int fd, int offset, int data_offset, int data_size, char *buf) {
   int rc;

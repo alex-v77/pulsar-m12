@@ -24,10 +24,12 @@
 #include "config.h"
 #endif
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "error_facility.h"
 #include "pulsar.h"
+#include "util.h"
 
 //------------------------------------------------------------------------------------------------------------
 int  pulsar_uidl() {
@@ -38,14 +40,22 @@ int  pulsar_uidl() {
     return defBadcmd;
 
   if(!g.pop3_arg[0]) {
-    pulsar_printf("+OK %d messages", g.head->del_msg_count);
+    char *stream_data = 0;
+    size_t stream_len;
+    FILE *f = open_memstream( &stream_data, &stream_len );
+
+    fprintf(f, "+OK %d messages\r\n", g.head->del_msg_count);
     for(i=0;i<g.head->msg_count;i++) {
       my_msg = &(g.head->msgs[i]);
-      if(my_msg->deleted)
-        continue;
-      pulsar_printf("%d %s", i+1, my_msg->uidl);
+      if(!my_msg->deleted)
+        fprintf(f, "%d %s\r\n", i+1, my_msg->uidl);
     }
-    pulsar_printf(".");
+    fprintf(f, ".\r\n");
+
+    fclose( f );
+    net_write( g.fd_out, stream_data, stream_len );
+    free( stream_data );
+
     return defNONE;
   }
 

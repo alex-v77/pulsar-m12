@@ -35,9 +35,7 @@
 #include <syslog.h>
 
 #include <stdlib.h>
-#define  __USE_GNU // this is needed for memmem in string.h
 #include <string.h>
-#undef   __USE_GNU
 
 #include "util.h"
 #include "mailbox.h"
@@ -749,6 +747,9 @@ int close_cache(strMailstoreHead *head, int commit) {
   int                  offset;
   int                  rc = 0;
   int                  i;
+  char                *stream_data = 0;
+  size_t               stream_len;
+  FILE                *f;
 
   err_debug_function();
   err_debug(6, "  commit = %d", commit);
@@ -763,14 +764,13 @@ int close_cache(strMailstoreHead *head, int commit) {
     goto exit;
   }
 
+  f = open_memstream( &stream_data, &stream_len );
+
   // store master header
-  rc = lseek(my_head->cache_fd, 0, SEEK_SET);
-  if(-1 == rc)
-    goto error;
   master_hdr.magic = htonl(defCacheMagic);
   master_hdr.major = htonl(defCacheMajor);
   master_hdr.minor = htonl(defCacheMinor);
-  rc = safe_write(my_head->cache_fd, &master_hdr, sizeof(master_hdr));
+  rc = fwrite(&master_hdr, 1, sizeof(master_hdr), f);
   if(sizeof(master_hdr) != rc)
     goto error;
 
@@ -780,7 +780,7 @@ int close_cache(strMailstoreHead *head, int commit) {
   strcpy(sec_hdr.UIDL, my_head->UIDL);
   i = strlen(sec_hdr.UIDL);
   memset(&sec_hdr.UIDL[i], 0x00, defUIDLSize - i);
-  rc = safe_write(my_head->cache_fd, &sec_hdr, sizeof(sec_hdr));
+  rc = fwrite(&sec_hdr, 1, sizeof(sec_hdr), f);
   if(sizeof(sec_hdr) != rc)
     goto error;
 
@@ -793,15 +793,24 @@ int close_cache(strMailstoreHead *head, int commit) {
     record.offset = htonl(offset);
     record.POP3_size = htonl(head->msgs[i].size);
     strcpy(record.UIDL, head->msgs[i].uidl);
-    rc = safe_write(my_head->cache_fd, &record, sizeof(record));
+    rc = fwrite(&record, 1, sizeof(record), f);
     if(sizeof(record) != rc)
       goto error;
     offset += my_msg->size;
   }
 
+  fclose( f );
+  f = 0;
+
+  rc = lseek(my_head->cache_fd, 0, SEEK_SET);
+  if(-1 == rc)
+    goto error;
+
+  rc = safe_write(my_head->cache_fd, stream_data, stream_len );
+  if ( rc != stream_len ) goto error;
+
   // cut the file here and now!
-  i = lseek(my_head->cache_fd, 0, SEEK_CUR);
-  rc = ftruncate(my_head->cache_fd, i);
+  rc = ftruncate(my_head->cache_fd, stream_len);
   if(-1 == rc)
     goto error;
 
@@ -811,10 +820,14 @@ int close_cache(strMailstoreHead *head, int commit) {
 error:
   err_debug(0, "ERROR: %s() - Cache file will be removed!", __FUNCTION__ );
   rc = -1;
+
+  if ( f ) fclose( f );
+
   if(my_head->cache_filename)
     unlink(my_head->cache_filename);
 
 exit:
+  free( stream_data );
   if(-1 != my_head->cache_fd) {
       close(my_head->cache_fd);
       my_head->cache_fd = -1;

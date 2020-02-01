@@ -35,9 +35,8 @@
 #include <syslog.h>
 
 #include <stdlib.h>
-#define  __USE_GNU // this is needed for memmem in string.h
+#define  _GNU_SOURCE // this is needed for memmem in string.h
 #include <string.h>
-#undef   __USE_GNU
 
 #include "util.h"
 #include "sqlite_mailbox.h"
@@ -129,8 +128,67 @@ error:
   err_debug_return(rc);
 }
 //----------------------------------------------------------------------------------------
+// dst will not be allocated if stuffing is not needed
+static void dot_stuff( char *src, int src_len, char **dst, int *dst_len ) {
+  char *dot_pat;
+  int segm_len;
+
+  if ( src_len == 1 && src[0] == '.' ) {
+	*dst = strdup( "..\r\n" );
+	*dst_len = 4;
+	return;
+  }
+
+  *dst = 0;
+  *dst_len = 0;
+
+  if ( src_len >= 3 && !memcmp( src, ".\r\n", 3 ) ) {
+	*dst = strdup( "..\r\n" );
+	*dst_len = 4;
+
+	src     += 3;
+	src_len -= 3;
+  }
+
+  for (;;) {
+	dot_pat = memmem( src, src_len, "\r\n.\r\n", 5 );
+	if ( !dot_pat ) break;
+
+	segm_len = dot_pat - src;
+
+	*dst = (char*)realloc( *dst, *dst_len + segm_len + 6 );
+
+	memcpy( *dst + *dst_len, src, segm_len );
+	*dst_len += segm_len;
+
+	memcpy( *dst + *dst_len, "\r\n..\r\n", 6 );
+	*dst_len += 6;
+
+	src     += segm_len + 5;
+	src_len -= segm_len + 5;
+  }
+
+  if ( src_len >= 3 && !memcmp( src + src_len - 3, "\r\n.", 3 ) ) {
+	*dst = (char*)realloc( *dst, src_len + 3 );
+
+	memcpy( *dst + *dst_len, src, src_len );
+	*dst_len += src_len;
+
+	memcpy( *dst + *dst_len, ".\r\n", 3 );
+	*dst_len += 3;
+	return;
+  }
+
+  if ( *dst ) {
+	memcpy( *dst + *dst_len, src, src_len );
+	*dst_len += src_len;
+  }
+}
+
 int mailstore_sqlite_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, int lines) {
   strMailboxHead_sqlite *my_head;
+  char *msg_data, *qmsg_data;
+  int msg_len, qmsg_len;
 
   err_debug_function();
 
@@ -152,8 +210,24 @@ int mailstore_sqlite_mailbox_retr (strMailstoreHead *head, int msg_num, int fd, 
 	int rc = sqlite3_step( query );
 	if ( rc == SQLITE_DONE )
 		break;
-	else if ( rc == SQLITE_ROW )
-  		rc = net_write(fd, sqlite3_column_text(query, 0), sqlite3_column_bytes(query, 0));
+	else if ( rc == SQLITE_ROW ) {
+		msg_data = (char*)sqlite3_column_text(query, 0);
+		msg_len  = sqlite3_column_bytes(query, 0);
+
+		dot_stuff( msg_data, msg_len, &qmsg_data, &qmsg_len );
+
+		if ( qmsg_data )
+			rc = net_write(fd, qmsg_data, qmsg_len);
+		else
+			rc = net_write(fd, msg_data, msg_len);
+
+		free( qmsg_data );
+
+		if ( rc == -1 ) {
+			sqlite3_finalize( query );
+			goto error;
+		}
+	}
 	else if ( rc == SQLITE_BUSY )
 		usleep(200000);
 	else {

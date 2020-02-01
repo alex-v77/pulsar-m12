@@ -34,7 +34,9 @@
 
 #include "util.h"
 #include "mailbox.h"
+#ifdef WITH_SQLITE
 #include "sqlite_mailbox.h"
+#endif
 #include "maildir.h"
 #include "error_facility.h"
 

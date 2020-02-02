@@ -749,7 +749,12 @@ int close_cache(strMailstoreHead *head, int commit) {
   int                  i;
   char                *stream_data = 0;
   size_t               stream_len;
-  FILE                *f;
+  FILE                *f = 0;
+  off_t                exist_csize;
+  char                *exist_cache = 0;
+  off_t                match_len = 0;
+  const int            hdr_len = sizeof(master_hdr) + sizeof(sec_hdr);
+  int                  match_hdr = 0;
 
   err_debug_function();
   err_debug(6, "  commit = %d", commit);
@@ -764,9 +769,33 @@ int close_cache(strMailstoreHead *head, int commit) {
     goto exit;
   }
 
+  exist_csize = lseek(my_head->cache_fd, 0, SEEK_END);
+  if(-1 == exist_csize)
+    goto error;
+
+  if ( exist_csize ) {
+    exist_cache = (char*)malloc(exist_csize);
+    if ( !exist_cache )
+	err_debug( 2, "WARNING: No memory for reading cache file" );
+  }
+
+  if ( exist_cache ) {
+    rc = lseek(my_head->cache_fd, 0, SEEK_SET);
+    if(-1 == rc)
+      goto error;
+
+    rc = safe_read(my_head->cache_fd, exist_cache, exist_csize);
+    if ( rc == -1 ) {
+	err_debug( 2, "WARNING: Cache file could not be read" );
+	free( exist_cache );
+	exist_cache = 0;
+    }
+  }
+
   f = open_memstream( &stream_data, &stream_len );
 
   // store master header
+  memset(&master_hdr, 0, sizeof(master_hdr));
   master_hdr.magic = htonl(defCacheMagic);
   master_hdr.major = htonl(defCacheMajor);
   master_hdr.minor = htonl(defCacheMinor);
@@ -775,16 +804,16 @@ int close_cache(strMailstoreHead *head, int commit) {
     goto error;
 
   // store secondary header
+  memset(&sec_hdr, 0, sizeof(sec_hdr));
   sec_hdr.records = htonl(head->del_msg_count);
   sec_hdr.offset = htonl(sizeof(master_hdr) + sizeof(sec_hdr));
   strcpy(sec_hdr.UIDL, my_head->UIDL);
-  i = strlen(sec_hdr.UIDL);
-  memset(&sec_hdr.UIDL[i], 0x00, defUIDLSize - i);
   rc = fwrite(&sec_hdr, 1, sizeof(sec_hdr), f);
   if(sizeof(sec_hdr) != rc)
     goto error;
 
   // store a record for every message
+  memset(&record, 0, sizeof(record));
   offset = 0;
   for(i=0; i<head->msg_count; i++) {
     if(head->msgs[i].deleted)
@@ -802,12 +831,39 @@ int close_cache(strMailstoreHead *head, int commit) {
   fclose( f );
   f = 0;
 
-  rc = lseek(my_head->cache_fd, 0, SEEK_SET);
+  if ( exist_cache ) {
+    int hdr_len = sizeof(master_hdr) + sizeof(sec_hdr);
+
+    while ( exist_cache[match_len] == stream_data[match_len] &&
+            match_len < exist_csize && match_len < hdr_len )
+	match_len++;
+
+    if ( match_len == hdr_len ) match_hdr = 1;
+
+    match_len = hdr_len;
+    while ( exist_cache[match_len] == stream_data[match_len] &&
+            match_len < exist_csize && match_len < stream_len )
+	match_len++;
+  }
+
+  err_debug( 2, "Updating cache: %d/%d bytes", (match_hdr? 0: hdr_len), (int)stream_len );
+
+  if ( !match_hdr ) {
+    rc = lseek(my_head->cache_fd, 0, SEEK_SET);
+    if ( rc == -1 ) goto error;
+
+    rc = safe_write(my_head->cache_fd, stream_data, hdr_len);
+    if ( rc != hdr_len ) goto error;
+  }
+
+  err_debug( 2, "Updating cache: %d/%d bytes", (int)(stream_len - match_len), (int)stream_len );
+
+  rc = lseek(my_head->cache_fd, match_len, SEEK_SET);
   if(-1 == rc)
     goto error;
 
-  rc = safe_write(my_head->cache_fd, stream_data, stream_len );
-  if ( rc != stream_len ) goto error;
+  rc = safe_write(my_head->cache_fd, stream_data + match_len, stream_len - match_len );
+  if ( rc != stream_len - match_len ) goto error;
 
   // cut the file here and now!
   rc = ftruncate(my_head->cache_fd, stream_len);
@@ -828,6 +884,8 @@ error:
 
 exit:
   free( stream_data );
+  free( exist_cache );
+
   if(-1 != my_head->cache_fd) {
       close(my_head->cache_fd);
       my_head->cache_fd = -1;

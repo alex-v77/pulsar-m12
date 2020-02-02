@@ -328,7 +328,7 @@ static int parse_mailbox(strMailstoreHead *head) {
   int rc;
 
   for (;;) {
-	rc = sqlite3_prepare_v2( my_head->db, "SELECT msg_id, text FROM messages ORDER BY msg_id", -1, &query, 0 );
+	rc = sqlite3_prepare_v2( my_head->db, "SELECT msg_id, len FROM msg_len ORDER BY msg_id", -1, &query, 0 );
 	if ( rc == SQLITE_OK )
 		break;
 	else if ( rc == SQLITE_BUSY )
@@ -359,7 +359,7 @@ static int parse_mailbox(strMailstoreHead *head) {
 		int64_t uidl = sqlite3_column_int64( query, 0 );
 		sprintf( head->msgs[head->msg_count-1].uidl, "%llx", (long long unsigned)uidl );
 
-		int size = sqlite3_column_bytes( query, 1 );
+		int size = sqlite3_column_int64( query, 1 );
 		head->msgs[head->msg_count-1].size = size;
 
 		head->total_size += size;

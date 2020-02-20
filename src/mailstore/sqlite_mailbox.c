@@ -180,6 +180,7 @@ static void dot_stuff( char *src, int src_len, char **dst, int *dst_len ) {
   }
 
   if ( *dst ) {
+	*dst = (char*)realloc( *dst, *dst_len + src_len );
 	memcpy( *dst + *dst_len, src, src_len );
 	*dst_len += src_len;
   }
